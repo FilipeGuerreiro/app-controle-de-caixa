@@ -13,10 +13,10 @@ import filipe.guerreiro.domain.model.Transaction
 
 @Database(
     entities = [CashSession::class, Transaction::class],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
-@ConstructedBy(AppDatabase::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cashDao(): CashDao
     abstract fun transactionDao(): TransactionDao
