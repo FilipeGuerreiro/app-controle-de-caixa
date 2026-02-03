@@ -17,6 +17,7 @@ import filipe.guerreiro.domain.model.Transaction
     exportSchema = false
 )
 @TypeConverters(Converters::class)
+@ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cashDao(): CashDao
     abstract fun transactionDao(): TransactionDao
