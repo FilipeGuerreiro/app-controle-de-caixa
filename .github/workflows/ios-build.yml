@@ -1,0 +1,35 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch: # Permite rodar manualmente se precisar
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Este passo compila o binário do iOS.
+      # No KMP, isso geralmente cria o framework necessário para o Xcode.
+      - name: Build iOS App Bundle
+        run: ./gradlew :composeApp:assembleIosReleaseFramework
+
+      # Como o objetivo é o sideloading (AltStore/Sideloadly),
+      # vamos comprimir a saída para que seja possa baixar.
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-framework
+          path: composeApp/build/fat-framework/release/
