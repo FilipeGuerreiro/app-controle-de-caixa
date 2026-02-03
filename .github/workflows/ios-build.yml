@@ -12,6 +12,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -21,10 +24,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       # Este passo compila o binário do iOS.
       # No KMP, isso geralmente cria o framework necessário para o Xcode.
       - name: Build iOS Framework (Device)
-        run: ./gradlew :composeApp:buildReleaseXCFramework --stacktrace --info
+        run: ./gradlew :composeApp:buildReleaseXCFramework --stacktrace --info --no-daemon
 
       # Como o objetivo é o sideloading (AltStore/Sideloadly),
       # vamos comprimir a saída para que seja possa baixar.
