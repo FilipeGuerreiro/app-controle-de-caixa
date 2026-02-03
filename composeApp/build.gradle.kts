@@ -111,3 +111,26 @@ compose.desktop {
         }
     }
 }
+
+// Custom task to build XCFramework for iOS (device + simulator)
+tasks.register("buildReleaseXCFramework") {
+    group = "build"
+    description = "Build XCFramework for iOS (device + simulator)"
+    dependsOn("linkReleaseFrameworkIosArm64")
+    dependsOn("linkReleaseFrameworkIosSimulatorArm64")
+    
+    doLast {
+        val xcframeworkPath = layout.buildDirectory.file("XCFrameworks/release/ComposeApp.xcframework").get().asFile
+        xcframeworkPath.deleteRecursively()
+        
+        exec {
+            commandLine(
+                "xcodebuild", "-create-xcframework",
+                "-framework", layout.buildDirectory.file("bin/iosArm64/releaseFramework/ComposeApp.framework").get().asFile.absolutePath,
+                "-framework", layout.buildDirectory.file("bin/iosSimulatorArm64/releaseFramework/ComposeApp.framework").get().asFile.absolutePath,
+                "-output", xcframeworkPath.absolutePath
+            )
+        }
+        println("XCFramework criado em: ${xcframeworkPath.absolutePath}")
+    }
+}
