@@ -1,3 +1,9 @@
+/build
+.kotlin
+.run
+*.swp
+*~
+
 *.iml
 .kotlin
 .gradle
