@@ -1,5 +1,6 @@
 package filipe.guerreiro.data.local
 
+import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -15,6 +16,7 @@ import filipe.guerreiro.domain.model.Transaction
     version = 1
 )
 @TypeConverters(Converters::class)
+@ConstructedBy(AppDatabase::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cashDao(): CashDao
     abstract fun transactionDao(): TransactionDao
