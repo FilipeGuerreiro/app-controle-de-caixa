@@ -1,0 +1,7 @@
+package filipe.guerreiro
+
+interface Platform {
+    val name: String
+}
+
+expect fun getPlatform(): Platform
