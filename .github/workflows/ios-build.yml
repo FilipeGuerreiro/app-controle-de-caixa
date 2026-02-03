@@ -30,7 +30,7 @@ jobs:
       # Este passo compila o binário do iOS.
       # No KMP, isso geralmente cria o framework necessário para o Xcode.
       - name: Build iOS Framework (Device)
-        run: ./gradlew :composeApp:buildReleaseXCFramework --stacktrace --info --no-daemon
+        run: ./gradlew :composeApp:buildReleaseXCFramework --stacktrace --info --no-daemon -Dorg.gradle.configuration-cache=false
 
       # Como o objetivo é o sideloading (AltStore/Sideloadly),
       # vamos comprimir a saída para que seja possa baixar.
