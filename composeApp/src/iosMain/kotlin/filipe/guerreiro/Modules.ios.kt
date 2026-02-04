@@ -30,8 +30,10 @@ val iosDatabaseModule = module {
 }
 
 
-fun initKoinIos() {
-    startKoin {
-        modules(appModule, iosDatabaseModule)
+object KoinInitializer {
+    fun initialize() {
+        startKoin {
+            modules(appModule, iosDatabaseModule)
+        }
     }
 }
