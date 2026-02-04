@@ -32,6 +32,24 @@ jobs:
       - name: Build iOS Framework (Device)
         run: ./gradlew :composeApp:buildReleaseXCFramework --stacktrace --info --no-daemon -Dorg.gradle.configuration-cache=false
 
+      - name: Archive iOS app (unsigned)
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build-xcode \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Package IPA (unsigned)
+        run: |
+          mkdir -p build/ipa/Payload
+          ditto "build/iosApp.xcarchive/Products/Applications/ControleDeCaixa.app" "build/ipa/Payload/ControleDeCaixa.app"
+          cd build/ipa
+          /usr/bin/zip -r "../ControleDeCaixa.ipa" "Payload"
+
       # Como o objetivo é o sideloading (AltStore/Sideloadly),
       # vamos comprimir a saída para que seja possa baixar.
       - name: Upload iOS Artifact
@@ -39,3 +57,9 @@ jobs:
         with:
           name: ios-release-framework
           path: composeApp/build/XCFrameworks/release/ComposeApp.xcframework
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-ipa
+          path: build/ControleDeCaixa.ipa
