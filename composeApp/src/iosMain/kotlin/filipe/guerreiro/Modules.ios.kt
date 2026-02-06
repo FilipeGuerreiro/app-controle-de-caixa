@@ -2,6 +2,8 @@ package filipe.guerreiro
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import filipe.guerreiro.data.IosUserPreferences
+import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.di.appModule
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -29,11 +31,21 @@ val iosDatabaseModule = module {
     }
 }
 
+val iosModule = module {
+    single<UserPreferences> {
+        IosUserPreferences()
+    }
+}
+
 
 object KoinInitializer {
     fun initialize() {
         startKoin {
-            modules(appModule, iosDatabaseModule)
+            modules(
+                appModule, // commonModule
+                iosDatabaseModule,
+                iosModule
+            )
         }
     }
 }

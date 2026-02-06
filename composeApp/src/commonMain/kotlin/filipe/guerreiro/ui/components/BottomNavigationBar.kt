@@ -5,7 +5,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -13,37 +12,36 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
-
-data class BottomNavItem(
-    val route: String,
-    val label: String,
-    val icon: ImageVector
-)
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import filipe.guerreiro.ui.navigation.BottomNavItem
 
 @Composable
-fun BottomNavigationBar(
-    items: List<BottomNavItem>,
-    selectedRoute: String,
-    onItemSelected: (BottomNavItem) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    NavigationBar(
-        modifier = modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
-    ) {
-        items.forEach { item ->
-            val isSelected = selectedRoute == item.route
+fun BottomNavigationBar(navController: NavController) {
+    val items = listOf(
+        BottomNavItem.Home,
+        BottomNavItem.Cash,
+        BottomNavItem.More,
+    )
 
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+
+        items.forEach { item ->
             NavigationBarItem(
-                selected = isSelected,
-                onClick = { onItemSelected(item) },
+                selected = currentRoute == item.route,
+                onClick = {
+                    navController.navigate(item.route) {
+                        popUpTo (navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
                 icon = {
                     Icon(
                         imageVector = item.icon,
@@ -65,21 +63,5 @@ fun BottomNavigationBar(
                 )
             )
         }
-    }
-}
-
-@Preview
-@Composable
-private fun BottomNavigationBarPreview() {
-    ControleDeCaixaTheme {
-        BottomNavigationBar(
-            items = listOf(
-                BottomNavItem(route = "home", label = "Home", icon = Icons.Filled.Home),
-                BottomNavItem(route = "cash", label = "Caixa", icon = Icons.Filled.Payments),
-                BottomNavItem(route = "more", label = "Mais", icon = Icons.Filled.Menu)
-            ),
-            selectedRoute = "home",
-            onItemSelected = {}
-        )
     }
 }

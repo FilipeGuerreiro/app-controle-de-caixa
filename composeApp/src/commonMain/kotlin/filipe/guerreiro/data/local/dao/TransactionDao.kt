@@ -16,4 +16,11 @@ interface TransactionDao {
 
     @Delete
     suspend fun deleteTransaction(transaction: Transaction)
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE sessionId = :sessionId AND type = 'INCOME'")
+    fun getIncomeSum(sessionId: Long): Flow<Long?>
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE sessionId = :sessionId AND type = 'EXPENSE'")
+    fun getExpenseSum(sessionId: Long): Flow<Long?>
+
 }

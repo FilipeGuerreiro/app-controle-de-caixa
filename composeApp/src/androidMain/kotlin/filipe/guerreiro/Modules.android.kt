@@ -1,8 +1,9 @@
 package filipe.guerreiro
 
-import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import filipe.guerreiro.data.AndroidUserPreferences
+import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -15,5 +16,11 @@ val androidDatabaseModule = module {
             context = context,
             name = dbFile.absolutePath
         )
+    }
+}
+
+val androidModule = module {
+    single<UserPreferences> {
+        AndroidUserPreferences(get())
     }
 }

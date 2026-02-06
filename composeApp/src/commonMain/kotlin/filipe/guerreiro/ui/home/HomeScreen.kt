@@ -30,8 +30,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,8 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
 import androidx.compose.ui.graphics.vector.ImageVector
-import filipe.guerreiro.ui.components.AppScaffold
-import filipe.guerreiro.ui.navigation.NavigationViewModel
+import filipe.guerreiro.ui.register.RegisterViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 data class RecentActivity(
@@ -53,36 +53,54 @@ data class RecentActivity(
     val icon: ImageVector
 )
 
+data class QuickActionUiModel(
+    val id: Int,
+    val emoji: String,
+    val title: String,
+    val priceStr: String
+)
+
+val mockedQuickActions = listOf(
+    QuickActionUiModel(1, "⬆️", "Vendas", "Pix"),
+    QuickActionUiModel(2, "⬆️", "Venda", "Crédito"),
+    QuickActionUiModel(3, "⬇️", "Saída", "Serviços"),
+)
+
 @Composable
 fun HomeScreen(
-    navigationViewModel: NavigationViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel()
 ) {
-    val currentRoute = navigationViewModel.currentRoute.collectAsState().value
-
-    AppScaffold(
-        selectedRoute = currentRoute,
-        onRouteChange = { route -> navigationViewModel.navigate(route) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            HomeHeader(
-                userName = "Flávia",
-                businessName = "Loja Espetinhos"
-            )
+        HomeHeader(
+            userName = "Flávia",
+            businessName = "Loja Espetinhos"
+        )
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            CashStatusCard()
+        CashStatusCard()
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            RecentActivities()
-        }
+        QuickActionSection(
+            actions = mockedQuickActions,
+            onActionClick = { action ->
+                println("Clickou em ${action.title} - Valor: ${action.priceStr}")
+                viewModel.disableUserRegistered()
+            }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+
+        RecentActivities()
     }
 }
 
@@ -160,7 +178,50 @@ fun CashStatusCard() {
                 )
             }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Botão Primário (Verde - Abrir Caixa)
+                Text(
+                    text = "Meta diária: R$ XXX/XXX | 80%",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Botão Primário (Verde - Abrir Caixa)
+                Text(
+                    text = "Entradas: R$ XXX",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = "Saídas: R$ XXX",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
+
 
             // Linha Inferior: Botões de Ação
             Row(
@@ -372,12 +433,10 @@ fun ActivityItem(activity: RecentActivity) {
     }
 }
 
-
-@Preview(showBackground = true, showSystemUi = false)
+@Preview(showBackground = true)
 @Composable
-private fun HomeScreenPreview() {
+fun HomeScreenPreview() {
     ControleDeCaixaTheme {
-        // Avoid using Koin in preview: pass a direct NavigationViewModel instance
-        HomeScreen(navigationViewModel = NavigationViewModel())
+        HomeScreen()
     }
 }

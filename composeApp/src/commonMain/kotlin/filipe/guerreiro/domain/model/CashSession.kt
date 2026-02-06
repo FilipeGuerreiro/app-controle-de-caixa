@@ -9,6 +9,8 @@ data class CashSession(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val openingTimeStamp: Instant,
     val closingTimeStamp: Instant? = null,
-    val initialAmount: Double,
-    val status: String = "OPEN"
+    val initialAmount: Long,
+    val status: CashStatusType = CashStatusType.OPEN
 )
+
+enum class CashStatusType { OPEN, CLOSED }

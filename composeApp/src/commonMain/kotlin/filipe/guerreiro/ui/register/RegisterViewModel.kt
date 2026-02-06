@@ -1,17 +1,16 @@
-package filipe.guerreiro.ui.home
+package filipe.guerreiro.ui.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import filipe.guerreiro.data.UserPreferences
-import filipe.guerreiro.data.local.dao.CashDao
 import kotlinx.coroutines.launch
 
-class HomeViewModel(
+class RegisterViewModel(
     private val userPreferences: UserPreferences
 ) : ViewModel() {
-    fun disableUserRegistered() {
+    fun onFinishRegister() {
         viewModelScope.launch {
-            userPreferences.setUserRegistered(false)
+            userPreferences.setUserRegistered(true)
         }
     }
 }

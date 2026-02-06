@@ -1,6 +1,7 @@
 package filipe.guerreiro
 
 import android.app.Application
+import filipe.guerreiro.di.appModule
 import org.koin.android.ext.koin.androidContext
 
 class MainApplication : Application() {
@@ -9,7 +10,11 @@ class MainApplication : Application() {
 
         initKoin {
             androidContext(this@MainApplication)
-            modules(androidDatabaseModule)
+            modules(
+                appModule, // CommonModule
+                androidDatabaseModule,
+                androidModule
+            )
         }
     }
 }

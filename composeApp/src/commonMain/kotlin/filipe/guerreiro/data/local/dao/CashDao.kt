@@ -15,6 +15,9 @@ interface CashDao {
     @Query("SELECT * FROM cash_sessions WHERE status = 'OPEN' LIMIT 1")
     fun getActiveSession(): Flow<CashSession?>
 
+    @Query("SELECT * FROM cash_sessions WHERE id = :sessionId LIMIT 1")
+    fun getCashSessionById(sessionId: Long): Flow<CashSession?>
+
     @Insert
     suspend fun insertSession(session: CashSession): Long
 
