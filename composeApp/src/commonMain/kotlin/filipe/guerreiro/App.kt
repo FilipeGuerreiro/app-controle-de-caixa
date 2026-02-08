@@ -24,6 +24,7 @@ fun App() {
 
         val shouldHideBottomBar = when (currentRoute) {
             "start",
+            "userSelection",
             "register" -> true
              else -> false
         }

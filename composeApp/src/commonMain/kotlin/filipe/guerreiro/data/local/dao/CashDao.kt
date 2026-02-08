@@ -26,4 +26,7 @@ interface CashDao {
 
     @Query("SELECT * FROM cash_sessions ORDER BY openingTimeStamp DESC")
     fun getAllSessions(): Flow<List<CashSession>>
+
+    @Query("SELECT * FROM cash_sessions WHERE status = 'CLOSED' ORDER BY closingTimeStamp DESC LIMIT 1")
+    suspend fun getLastClosedSession(): CashSession?
 }

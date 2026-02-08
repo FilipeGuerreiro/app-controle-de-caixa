@@ -5,4 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface CashRepository {
     fun getSessionBalance(sessionId: Long): Flow<SessionBalance>
+    suspend fun getSuggestedInitialAmount(): Long
+    suspend fun createSession(initialAmount: Long)
 }

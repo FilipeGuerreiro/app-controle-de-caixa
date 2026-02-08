@@ -18,7 +18,12 @@ fun AppStartScreen(
 
     when (state) {
         AppStartState.Loading -> LoadingContent()
+
         AppStartState.Ready -> NavigateOnce(navController, "home")
-        AppStartState.NeedsOnboarding -> NavigateOnce(navController, "register")
+
+        AppStartState.NeedsUserCreation -> NavigateOnce(navController, "register")
+
+        AppStartState.NeedsUserSelection -> NavigateOnce(navController, "userSelection")
+
     }
 }

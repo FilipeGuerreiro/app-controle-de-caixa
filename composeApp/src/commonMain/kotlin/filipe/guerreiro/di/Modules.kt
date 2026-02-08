@@ -5,34 +5,37 @@ import filipe.guerreiro.core.startup.AppViewModel
 import filipe.guerreiro.core.startup.StartupResolver
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.data.local.CashRepositoryImpl
+import filipe.guerreiro.data.local.UserRepositoryImpl
 import filipe.guerreiro.data.local.getDatabaseBuilder
 import filipe.guerreiro.domain.repository.CashRepository
+import filipe.guerreiro.domain.repository.UserRepository
 import filipe.guerreiro.ui.home.HomeViewModel
 import filipe.guerreiro.ui.navigation.NavigationViewModel
+import filipe.guerreiro.ui.opening.OpeningViewModel
 import filipe.guerreiro.ui.register.RegisterViewModel
+import filipe.guerreiro.ui.userselection.UserSelectionViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
 
-    factory<AppStartupResolver> {
-        StartupResolver(get())
-    }
+    factory<AppStartupResolver> { StartupResolver(get(), get()) }
 
     factory { NavigationViewModel() }
 
-    // 1. Definimos como criar o banco (recebendo o builder específico de cada plataforma)
     single<AppDatabase> { getDatabaseBuilder(get()) }
 
-    // 2. Definimos como criar os DAOs (Injeção de dependência pura!)
+    // Daos
     single { get<AppDatabase>().cashDao() }
     single { get<AppDatabase>().transactionDao() }
+    single { get<AppDatabase>().userDao() }
 
-    // 3. Repositório
+    // Repositorys
     single<CashRepository> { CashRepositoryImpl(get(), get()) }
+    single<UserRepository> { UserRepositoryImpl(get()) }
 
     viewModel {
-        RegisterViewModel(get())
+        RegisterViewModel(get(), get(), get())
     }
 
     viewModel {
@@ -40,6 +43,14 @@ val appModule = module {
     }
 
     viewModel {
-        HomeViewModel(get())
+        HomeViewModel(get(), get())
+    }
+
+    viewModel {
+        OpeningViewModel(get())
+    }
+
+    viewModel {
+        UserSelectionViewModel(get(), get(), get())
     }
 }

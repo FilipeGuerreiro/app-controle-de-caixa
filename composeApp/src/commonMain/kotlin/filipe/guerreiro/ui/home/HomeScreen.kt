@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
 import androidx.compose.ui.graphics.vector.ImageVector
-import filipe.guerreiro.ui.register.RegisterViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 data class RecentActivity(
@@ -68,6 +67,7 @@ val mockedQuickActions = listOf(
 
 @Composable
 fun HomeScreen(
+    onOpenCashClick: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     Column(
@@ -85,7 +85,9 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CashStatusCard()
+        CashStatusCard(
+            onOpenCashClick = onOpenCashClick
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -131,7 +133,9 @@ fun HomeHeader(
 }
 
 @Composable
-fun CashStatusCard() {
+fun CashStatusCard(
+    onOpenCashClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -230,7 +234,7 @@ fun CashStatusCard() {
             ) {
                 // Botão Primário (Verde - Abrir Caixa)
                 Button(
-                    onClick = { /* TODO: Abrir Caixa */ },
+                    onClick = onOpenCashClick,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -437,6 +441,8 @@ fun ActivityItem(activity: RecentActivity) {
 @Composable
 fun HomeScreenPreview() {
     ControleDeCaixaTheme {
-        HomeScreen()
+        HomeScreen(
+            onOpenCashClick = {}
+        )
     }
 }

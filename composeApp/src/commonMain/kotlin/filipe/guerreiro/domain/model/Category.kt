@@ -4,10 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import kotlin.time.Instant
 
 @Entity(
-    tableName = "cash_sessions",
+    tableName = "categories",
     foreignKeys = [
         ForeignKey(
             entity = User::class,
@@ -18,13 +17,9 @@ import kotlin.time.Instant
     ],
     indices = [Index(value = ["userId"])]
 )
-data class CashSession(
+data class Category(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val userId: Long,
-    val openingTimeStamp: Instant,
-    val closingTimeStamp: Instant? = null,
-    val initialAmount: Long,
-    val status: CashStatusType = CashStatusType.OPEN
+    val name: String,
+    val type: TransactionType
 )
-
-enum class CashStatusType { OPEN, CLOSED }

@@ -3,8 +3,10 @@ package filipe.guerreiro
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import filipe.guerreiro.data.AndroidUserPreferences
+import filipe.guerreiro.data.SessionPreferences
 import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
+import filipe.guerreiro.session.AndroidSessionPreferences
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -22,5 +24,9 @@ val androidDatabaseModule = module {
 val androidModule = module {
     single<UserPreferences> {
         AndroidUserPreferences(get())
+    }
+
+    single<SessionPreferences> {
+        AndroidSessionPreferences(get())
     }
 }

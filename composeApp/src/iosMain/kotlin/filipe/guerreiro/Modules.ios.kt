@@ -3,9 +3,11 @@ package filipe.guerreiro
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import filipe.guerreiro.data.IosUserPreferences
+import filipe.guerreiro.data.SessionPreferences
 import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.di.appModule
+import filipe.guerreiro.session.IosSessionPreferences
 import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
@@ -34,6 +36,10 @@ val iosDatabaseModule = module {
 val iosModule = module {
     single<UserPreferences> {
         IosUserPreferences()
+    }
+
+    single<SessionPreferences> {
+        IosSessionPreferences()
     }
 }
 

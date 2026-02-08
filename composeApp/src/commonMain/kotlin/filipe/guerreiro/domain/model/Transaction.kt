@@ -21,6 +21,8 @@ import kotlin.time.Instant
 data class Transaction(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sessionId: Long,
+    val categoryId: Long,
+    val paymentMethodId: Long,
     val amount: Long,
     val description: String,
     val type: TransactionType,
