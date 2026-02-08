@@ -17,9 +17,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.LocalDining
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,6 +27,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -39,37 +38,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
-import androidx.compose.ui.graphics.vector.ImageVector
+import filipe.guerreiro.ui.components.CashStatusCardSkeleton
+import filipe.guerreiro.ui.components.HomeHeaderSkeleton
+import filipe.guerreiro.ui.components.QuickActionSectionSkeleton
+import filipe.guerreiro.ui.components.RecentActivitiesSkeleton
 import org.koin.compose.viewmodel.koinViewModel
-
-data class RecentActivity(
-    val id: String,
-    val title: String,
-    val time: String,
-    val type: String,
-    val amount: Double,
-    val isIncome: Boolean,
-    val icon: ImageVector
-)
-
-data class QuickActionUiModel(
-    val id: Int,
-    val emoji: String,
-    val title: String,
-    val priceStr: String
-)
-
-val mockedQuickActions = listOf(
-    QuickActionUiModel(1, "⬆️", "Vendas", "Pix"),
-    QuickActionUiModel(2, "⬆️", "Venda", "Crédito"),
-    QuickActionUiModel(3, "⬇️", "Saída", "Serviços"),
-)
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun HomeScreen(
     onOpenCashClick: () -> Unit,
+    onNavigateToUserSelection: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Redireciona para seleção de usuário se não estiver logado
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn == false) {
+            onNavigateToUserSelection()
+        }
+    }
+
+    val showSkeleton = uiState.isLoading || uiState.isLoggedIn == null
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,31 +70,45 @@ fun HomeScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        HomeHeader(
-            userName = "Flávia",
-            businessName = "Loja Espetinhos"
-        )
+        if (showSkeleton) {
+            HomeHeaderSkeleton()
+        } else {
+            HomeHeader(
+                userName = uiState.userName.ifEmpty { "Usuário" },
+                businessName = uiState.businessName.ifEmpty { "Seu Negócio" }
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CashStatusCard(
-            onOpenCashClick = onOpenCashClick
-        )
+        if (showSkeleton) {
+            CashStatusCardSkeleton()
+        } else {
+            CashStatusCard(
+                onOpenCashClick = onOpenCashClick
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        // Quick Actions com Skeleton Loading
+        if (showSkeleton) {
+            QuickActionSectionSkeleton(itemCount = 4)
+        } else if (uiState.quickActions.isNotEmpty()) {
+            QuickActionSection(
+                actions = uiState.quickActions,
+                onActionClick = { action ->
+                    println("Clickou em ${action.title} - Valor: ${action.priceStr}")
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        QuickActionSection(
-            actions = mockedQuickActions,
-            onActionClick = { action ->
-                println("Clickou em ${action.title} - Valor: ${action.priceStr}")
-                viewModel.disableUserRegistered()
-            }
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-
-        RecentActivities()
+        if (showSkeleton) {
+            RecentActivitiesSkeleton(itemCount = 3)
+        } else if (uiState.recentActivities.isNotEmpty()) {
+            RecentActivities(activities = uiState.recentActivities)
+        }
     }
 }
 
@@ -124,7 +130,7 @@ fun HomeHeader(
             text = businessName,
             style = MaterialTheme.typography.titleSmall.copy(
                 fontWeight = FontWeight.Light,
-                fontSize = 12.sp,
+                fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             ),
             modifier = Modifier.padding(start = 6.dp, top = 8.dp)
@@ -280,37 +286,7 @@ fun CashStatusCard(
 }
 
 @Composable
-fun RecentActivities() {
-    val mockActivities = listOf(
-        RecentActivity(
-            id = "1",
-            title = "Combo Meal #1",
-            time = "1:45 PM",
-            type = "Cash",
-            amount = 12.50,
-            isIncome = true,
-            icon = Icons.Default.LocalDining
-        ),
-        RecentActivity(
-            id = "2",
-            title = "Soda (L)",
-            time = "1:42 PM",
-            type = "Card",
-            amount = 3.00,
-            isIncome = true,
-            icon = Icons.Default.ShoppingCart
-        ),
-        RecentActivity(
-            id = "3",
-            title = "Ice Re-stock",
-            time = "1:15 PM",
-            type = "Inventory",
-            amount = 8.00,
-            isIncome = false,
-            icon = Icons.Default.Inventory2
-        )
-    )
-
+fun RecentActivities(activities: List<RecentActivity>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -347,7 +323,7 @@ fun RecentActivities() {
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            mockActivities.forEach { activity ->
+            activities.forEach { activity ->
                 ActivityItem(activity = activity)
             }
         }
@@ -442,7 +418,8 @@ fun ActivityItem(activity: RecentActivity) {
 fun HomeScreenPreview() {
     ControleDeCaixaTheme {
         HomeScreen(
-            onOpenCashClick = {}
+            onOpenCashClick = {},
+            onNavigateToUserSelection = {}
         )
     }
 }

@@ -8,24 +8,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -52,7 +56,6 @@ fun RegisterScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreenContent(
     state: RegisterUiState,
@@ -68,79 +71,109 @@ fun RegisterScreenContent(
         state.name.trim().isNotEmpty() &&
         state.businessName.trim().isNotEmpty()
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
+        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        cursorColor = MaterialTheme.colorScheme.primary,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+    )
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Criar perfil") }
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Cadastre seu nome e o nome do negócio para começar.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            HeaderBlock()
 
-            OutlinedTextField(
-                value = state.name,
-                onValueChange = onNameChange,
-                label = { Text("Seu nome") },
-                placeholder = { Text("Ex.: Flávia Oliveira") },
-                singleLine = true,
-                isError = nameError,
-                supportingText = {
-                    if (nameError) {
-                        Text("Informe seu nome.")
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = state.businessName,
-                onValueChange = onBusinessNameChange,
-                label = { Text("Nome do negócio") },
-                placeholder = { Text("Ex.: Loja Espetinhos") },
-                singleLine = true,
-                isError = businessError,
-                supportingText = {
-                    if (businessError) {
-                        Text("Informe o nome do negócio.")
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        if (canSubmit) onSubmit()
-                    }
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                tonalElevation = 1.dp,
+                shadowElevation = 2.dp,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = state.name,
+                        onValueChange = onNameChange,
+                        label = { Text("Seu nome") },
+                        placeholder = { Text("Ex.: Flávia Oliveira") },
+                        singleLine = true,
+                        isError = nameError,
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(12.dp),
+                        supportingText = {
+                            if (nameError) {
+                                Text("Informe seu nome.")
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = state.businessName,
+                        onValueChange = onBusinessNameChange,
+                        label = { Text("Nome do negócio") },
+                        placeholder = { Text("Ex.: Loja Espetinhos") },
+                        singleLine = true,
+                        isError = businessError,
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(12.dp),
+                        supportingText = {
+                            if (businessError) {
+                                Text("Informe o nome do negócio.")
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                                if (canSubmit) onSubmit()
+                            }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
 
             if (state.errorMessage != null) {
-                Text(
-                    text = state.errorMessage,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Text(
+                        text = state.errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -148,7 +181,8 @@ fun RegisterScreenContent(
             Button(
                 onClick = onSubmit,
                 enabled = canSubmit,
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -157,10 +191,37 @@ fun RegisterScreenContent(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Finalizar cadastro")
+                    Text(
+                        text = "Finalizar cadastro",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+private fun HeaderBlock() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Criar perfil",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "Vamos configurar o seu acesso, cadastre seu nome e o do seu negócio.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

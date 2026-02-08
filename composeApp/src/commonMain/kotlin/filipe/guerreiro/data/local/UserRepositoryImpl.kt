@@ -9,11 +9,13 @@ class UserRepositoryImpl(
 ) : UserRepository {
 
     override suspend fun getAllUsers(): List<User> {
-        return userDao.getAll()
+        val users = userDao.getAll()
+        return users
     }
 
     override suspend fun getUserById(id: Long): User? {
-        return userDao.getById(id)
+        val user = userDao.getById(id)
+        return user
     }
 
     override suspend fun createUser(name: String, businessName: String): User {

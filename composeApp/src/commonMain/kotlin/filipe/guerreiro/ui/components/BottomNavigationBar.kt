@@ -35,7 +35,7 @@ fun BottomNavigationBar(navController: NavController) {
                 selected = currentRoute == item.route,
                 onClick = {
                     navController.navigate(item.route) {
-                        popUpTo (navController.graph.startDestinationId) {
+                        popUpTo(BottomNavItem.Home.route) {
                             saveState = true
                         }
                         launchSingleTop = true

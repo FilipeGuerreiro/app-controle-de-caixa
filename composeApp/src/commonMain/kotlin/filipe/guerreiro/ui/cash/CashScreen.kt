@@ -17,12 +17,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalDining
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -33,6 +33,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,9 +45,71 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
+import org.koin.compose.viewmodel.koinViewModel
+
+@Immutable
+data class HistoryItemUi(
+    val id: String,
+    val title: String,
+    val time: String,
+    val method: String,
+    val amountLabel: String,
+    val isIncome: Boolean,
+    val icon: ImageVector
+)
+
+private val mockHistoryItems = listOf(
+    HistoryItemUi(
+        id = "1",
+        title = "Combo Espetinho #1",
+        time = "14:45",
+        method = "Dinheiro",
+        amountLabel = "+ R$ 25,00",
+        isIncome = true,
+        icon = Icons.Default.LocalDining
+    ),
+    HistoryItemUi(
+        id = "2",
+        title = "Refrigerante Lata",
+        time = "14:50",
+        method = "Pix",
+        amountLabel = "+ R$ 6,00",
+        isIncome = true,
+        icon = Icons.Default.ShoppingCart
+    ),
+    HistoryItemUi(
+        id = "3",
+        title = "Reposição Carvão",
+        time = "15:10",
+        method = "Saída",
+        amountLabel = "- R$ 45,00",
+        isIncome = false,
+        icon = Icons.Default.Inventory2
+    ),
+    HistoryItemUi(
+        id = "4",
+        title = "Porção Completa",
+        time = "15:35",
+        method = "Crédito",
+        amountLabel = "+ R$ 52,00",
+        isIncome = true,
+        icon = Icons.Default.LocalDining
+    )
+)
 
 @Composable
-fun CashScreen() {
+fun CashScreen(
+    viewModel: CashViewModel = koinViewModel(),
+    onNavigateToUserSelection: () -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn == false) {
+            onNavigateToUserSelection()
+        }
+    }
+
     Scaffold(
         topBar = {
             CashTopBar()
@@ -59,7 +125,8 @@ fun CashScreen() {
         ) {
             DailySummaryCard()
             FilterChipsRow()
-            HistorySection()
+            // ✅ Otimização 3: Passamos a lista estática
+            HistorySection(items = mockHistoryItems)
         }
     }
 }
@@ -164,7 +231,7 @@ private fun SummaryDirection(
     label: String,
     value: String,
     accentColor: Color,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconBackground: Color
 ) {
     Row(
@@ -255,18 +322,9 @@ private fun FilterChipsRow() {
     }
 }
 
-data class HistoryItemUi(
-    val id: String,
-    val title: String,
-    val time: String,
-    val method: String,
-    val amountLabel: String,
-    val isIncome: Boolean,
-    val icon: ImageVector
-)
 
 @Composable
-private fun HistorySection() {
+private fun HistorySection(items: List<HistoryItemUi>) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -279,45 +337,6 @@ private fun HistorySection() {
             )
         )
 
-        val items = listOf(
-            HistoryItemUi(
-                id = "1",
-                title = "Combo Espetinho #1",
-                time = "14:45",
-                method = "Dinheiro",
-                amountLabel = "+ R$ 25,00",
-                isIncome = true,
-                icon = Icons.Default.LocalDining
-            ),
-            HistoryItemUi(
-                id = "2",
-                title = "Refrigerante Lata",
-                time = "14:50",
-                method = "Pix",
-                amountLabel = "+ R$ 6,00",
-                isIncome = true,
-                icon = Icons.Default.ShoppingCart
-            ),
-            HistoryItemUi(
-                id = "3",
-                title = "Reposição Carvão",
-                time = "15:10",
-                method = "Saída",
-                amountLabel = "- R$ 45,00",
-                isIncome = false,
-                icon = Icons.Default.Inventory2
-            ),
-            HistoryItemUi(
-                id = "4",
-                title = "Porção Completa",
-                time = "15:35",
-                method = "Crédito",
-                amountLabel = "+ R$ 52,00",
-                isIncome = true,
-                icon = Icons.Default.LocalDining
-            )
-        )
-
         items.forEach { item ->
             HistoryCard(item = item)
         }
@@ -326,8 +345,10 @@ private fun HistorySection() {
 
 @Composable
 private fun HistoryCard(item: HistoryItemUi) {
+    // Cálculo de cores extraído para facilitar leitura e debug
     val accentColor = if (item.isIncome) Color(0xFF0F6A37) else Color(0xFFC62828)
     val iconBackground = if (item.isIncome) Color(0xFFE8F4EE) else Color(0xFFFDE8E8)
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -434,6 +455,8 @@ private fun FilterChip(
 @Composable
 private fun CashScreenPreview() {
     ControleDeCaixaTheme {
-        CashScreen()
+        CashScreen(
+            onNavigateToUserSelection = {}
+        )
     }
 }

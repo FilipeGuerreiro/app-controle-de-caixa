@@ -2,10 +2,9 @@ package filipe.guerreiro.ui.userselection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import filipe.guerreiro.data.SessionPreferences
-import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.domain.model.User
 import filipe.guerreiro.domain.repository.UserRepository
+import filipe.guerreiro.domain.session.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,8 +17,7 @@ data class UserSelectionUiState(
 
 class UserSelectionViewModel(
     private val userRepository: UserRepository,
-    private val sessionPreferences: SessionPreferences,
-    private val userPreferences: UserPreferences
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserSelectionUiState())
@@ -51,19 +49,19 @@ class UserSelectionViewModel(
         if (_uiState.value.isLoading) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            try {
-                sessionPreferences.setLoggedUserId(userId)
-                userPreferences.setUserRegistered(true)
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                onSuccess()
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "Não foi possível selecionar o usuário."
-                )
-            }
+//            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            
+            sessionManager.login(userId)
+                .onSuccess {
+//                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onSuccess()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Não foi possível selecionar o usuário."
+                    )
+                }
         }
     }
-
 }

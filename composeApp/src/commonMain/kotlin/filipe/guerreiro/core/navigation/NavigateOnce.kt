@@ -11,7 +11,7 @@ fun NavigateOnce(
 ) {
     LaunchedEffect(route) {
         navController.navigate(route) {
-            popUpTo(0)
+            popUpTo("start") { inclusive = true }
         }
     }
 }

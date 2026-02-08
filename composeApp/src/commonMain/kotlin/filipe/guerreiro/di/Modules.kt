@@ -7,8 +7,11 @@ import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.data.local.CashRepositoryImpl
 import filipe.guerreiro.data.local.UserRepositoryImpl
 import filipe.guerreiro.data.local.getDatabaseBuilder
+import filipe.guerreiro.data.session.SessionManagerImpl
 import filipe.guerreiro.domain.repository.CashRepository
 import filipe.guerreiro.domain.repository.UserRepository
+import filipe.guerreiro.domain.session.SessionManager
+import filipe.guerreiro.ui.cash.CashViewModel
 import filipe.guerreiro.ui.home.HomeViewModel
 import filipe.guerreiro.ui.navigation.NavigationViewModel
 import filipe.guerreiro.ui.opening.OpeningViewModel
@@ -23,9 +26,12 @@ val appModule = module {
 
     factory { NavigationViewModel() }
 
-    single<AppDatabase> { getDatabaseBuilder(get()) }
+    // Database com inicialização lazy - só construído quando primeiro DAO for acessado
+    single<AppDatabase> { 
+        getDatabaseBuilder(get()) 
+    }
 
-    // Daos
+    // DAOs - resolvidos sob demanda (lazy por padrão no Koin)
     single { get<AppDatabase>().cashDao() }
     single { get<AppDatabase>().transactionDao() }
     single { get<AppDatabase>().userDao() }
@@ -33,6 +39,9 @@ val appModule = module {
     // Repositorys
     single<CashRepository> { CashRepositoryImpl(get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get()) }
+
+    // Session Manager - singleton para gerenciar estado de autenticação
+    single<SessionManager> { SessionManagerImpl(get(), get()) }
 
     viewModel {
         RegisterViewModel(get(), get(), get())
@@ -43,7 +52,11 @@ val appModule = module {
     }
 
     viewModel {
-        HomeViewModel(get(), get())
+        HomeViewModel(get())
+    }
+
+    viewModel {
+        CashViewModel(get())
     }
 
     viewModel {
@@ -51,6 +64,7 @@ val appModule = module {
     }
 
     viewModel {
-        UserSelectionViewModel(get(), get(), get())
+        UserSelectionViewModel(get(), get())
     }
 }
+

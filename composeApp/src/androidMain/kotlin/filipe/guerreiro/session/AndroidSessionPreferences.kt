@@ -19,9 +19,10 @@ class AndroidSessionPreferences(
     private val LOGGED_USER_ID = longPreferencesKey("logged_user_id")
 
     override suspend fun getLoggedUserId(): Long? {
-        return context.dataStore.data
+        val result = context.dataStore.data
             .map { prefs -> prefs[LOGGED_USER_ID] }
             .first()
+        return result
     }
 
     override suspend fun setLoggedUserId(userId: Long) {

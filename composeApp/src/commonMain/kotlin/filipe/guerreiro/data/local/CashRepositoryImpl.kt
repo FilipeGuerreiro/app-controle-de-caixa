@@ -45,7 +45,7 @@ class CashRepositoryImpl(
     }
 
     override suspend fun createSession(initialAmount: Long) {
-        val activeSession = cashDao.getActiveSession()
+        val activeSession = cashDao.getActiveSession().first()
 
         if (activeSession != null) {
             throw IllegalStateException("Já existe um caixa aberto, Feche-o antes de abrir um novo.")
