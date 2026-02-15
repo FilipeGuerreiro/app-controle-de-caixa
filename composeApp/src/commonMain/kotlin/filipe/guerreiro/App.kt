@@ -19,10 +19,10 @@ fun App() {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     val shouldHideBottomBar = when (currentRoute) {
-        "start",
-        "userSelection",
-        "register" -> true
-         else -> false
+        "home",
+        "cash",
+        "more" -> false
+         else -> true
     }
 
     ControleDeCaixaTheme {

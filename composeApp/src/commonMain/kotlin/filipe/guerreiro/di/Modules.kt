@@ -12,6 +12,7 @@ import filipe.guerreiro.domain.repository.CashRepository
 import filipe.guerreiro.domain.repository.UserRepository
 import filipe.guerreiro.domain.session.SessionManager
 import filipe.guerreiro.ui.cash.CashViewModel
+import filipe.guerreiro.ui.closing.ClosingViewModel
 import filipe.guerreiro.ui.home.HomeViewModel
 import filipe.guerreiro.ui.navigation.NavigationViewModel
 import filipe.guerreiro.ui.opening.OpeningViewModel
@@ -52,15 +53,19 @@ val appModule = module {
     }
 
     viewModel {
-        HomeViewModel(get())
+        HomeViewModel(get(), get())
     }
 
     viewModel {
-        CashViewModel(get())
+        CashViewModel(get(), get(), get())
     }
 
     viewModel {
-        OpeningViewModel(get())
+        OpeningViewModel(get(), get())
+    }
+
+    viewModel {
+        ClosingViewModel(get(), get())
     }
 
     viewModel {

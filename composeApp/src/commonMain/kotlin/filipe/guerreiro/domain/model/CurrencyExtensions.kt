@@ -17,6 +17,14 @@ fun Long.toCurrencyString(): String {
     return "$prefix$reais,$centsStr"
 }
 
+fun Long.toCurrencyStringWithoutPrefix(): String {
+    val absValue = abs(this)
+    val reais = absValue / 100
+    val cents = absValue % 100
+    val centsStr = cents.toString().padStart(2, '0')
+    return "$reais,$centsStr"
+}
+
 /**
  * Converte um `Double` representando reais para centavos (`Long`).
  * Exemplo: `12.5.toCents()` -> 1250L

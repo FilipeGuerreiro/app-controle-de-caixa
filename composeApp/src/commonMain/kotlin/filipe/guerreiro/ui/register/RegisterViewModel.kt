@@ -2,9 +2,9 @@ package filipe.guerreiro.ui.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import filipe.guerreiro.data.SessionPreferences
 import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.domain.repository.UserRepository
+import filipe.guerreiro.domain.session.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,7 +19,7 @@ data class RegisterUiState(
 
 class RegisterViewModel(
     private val userRepository: UserRepository,
-    private val sessionPreferences: SessionPreferences,
+    private val sessionManager: SessionManager,
     private val userPreferences: UserPreferences
 ) : ViewModel() {
 
@@ -56,7 +56,7 @@ class RegisterViewModel(
             _uiState.value = current.copy(isLoading = true, errorMessage = null)
             try {
                 val user = userRepository.createUser(name, businessName)
-                sessionPreferences.setLoggedUserId(user.id)
+                sessionManager.login(user.id)
                 userPreferences.setUserRegistered(true)
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 onSuccess()

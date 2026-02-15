@@ -1,7 +1,12 @@
 package filipe.guerreiro.ui.cash
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,12 +18,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalDining
@@ -27,11 +40,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,65 +60,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
 import org.koin.compose.viewmodel.koinViewModel
 
-@Immutable
-data class HistoryItemUi(
-    val id: String,
-    val title: String,
-    val time: String,
-    val method: String,
-    val amountLabel: String,
-    val isIncome: Boolean,
-    val icon: ImageVector
-)
-
-private val mockHistoryItems = listOf(
-    HistoryItemUi(
-        id = "1",
-        title = "Combo Espetinho #1",
-        time = "14:45",
-        method = "Dinheiro",
-        amountLabel = "+ R$ 25,00",
-        isIncome = true,
-        icon = Icons.Default.LocalDining
-    ),
-    HistoryItemUi(
-        id = "2",
-        title = "Refrigerante Lata",
-        time = "14:50",
-        method = "Pix",
-        amountLabel = "+ R$ 6,00",
-        isIncome = true,
-        icon = Icons.Default.ShoppingCart
-    ),
-    HistoryItemUi(
-        id = "3",
-        title = "Reposição Carvão",
-        time = "15:10",
-        method = "Saída",
-        amountLabel = "- R$ 45,00",
-        isIncome = false,
-        icon = Icons.Default.Inventory2
-    ),
-    HistoryItemUi(
-        id = "4",
-        title = "Porção Completa",
-        time = "15:35",
-        method = "Crédito",
-        amountLabel = "+ R$ 52,00",
-        isIncome = true,
-        icon = Icons.Default.LocalDining
-    )
-)
 
 @Composable
 fun CashScreen(
     viewModel: CashViewModel = koinViewModel(),
     onNavigateToUserSelection: () -> Unit,
+    onOpenCashClick: () -> Unit = {},
+    onNavigateToTransaction: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -110,9 +80,191 @@ fun CashScreen(
         }
     }
 
+    AnimatedContent(
+        targetState = uiState.selectedSession,
+        transitionSpec = {
+            if (targetState != null) {
+                slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+            } else {
+                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            }
+        },
+        label = "CashScreenNavigation"
+    ) { selectedSession ->
+        if (selectedSession == null) {
+            CashListContent(
+                sessions = uiState.cashSessions,
+                onSessionClick = viewModel::selectSession,
+                onOpenCashClick = onOpenCashClick
+            )
+        } else {
+            CashDetailsContent(
+                session = selectedSession,
+                historyItems = uiState.historyItems,
+                onBackClick = viewModel::clearSelection,
+                onPreviousClick = viewModel::previousSession,
+                onNextClick = viewModel::nextSession,
+                onNavigateToTransaction = onNavigateToTransaction
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CashListContent(
+    sessions: List<CashSessionUi>,
+    onSessionClick: (CashSessionUi) -> Unit,
+    onOpenCashClick: () -> Unit
+) {
     Scaffold(
         topBar = {
-            CashTopBar()
+            TopAppBar(
+                title = { Text("Meus Caixas") }
+            )
+        },
+        floatingActionButton = {
+           // Provide a mechanism to open a new cash session if desired, 
+           // here we reuse the existing callback potentially.
+           // Or just leave it for the user to decide where to put "Open New Cash"
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(sessions) { session ->
+                CashSessionCard(session, onClick = { onSessionClick(session) })
+            }
+        }
+    }
+}
+
+@Composable
+fun CashSessionCard(session: CashSessionUi, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = session.date,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                StatusPill(text = session.status)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Saldo Final",
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Text(
+                    text = session.finalBalance ?: "---",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color(0xFF0F6A37),
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.size(8.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CashDetailsContent(
+    session: CashSessionUi,
+    historyItems: List<HistoryItemUi>,
+    onBackClick: () -> Unit,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onNavigateToTransaction: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            Column {
+                // Main Top Bar with Back Button and Title
+                TopAppBar(
+                    title = { Text("Detalhes do Caixa") },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar para lista")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+
+                // Date Navigation Bar (Sub-header)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 1.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        IconButton(onClick = onPreviousClick) {
+                            Icon(Icons.Default.ChevronLeft, "Anterior")
+                        }
+                        
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = session.date,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Text(
+                                text = if(session.isCurrent) "Caixa Atual" else "Caixa Fechado",
+                                style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            )
+                        }
+
+                        IconButton(onClick = onNextClick) {
+                            Icon(Icons.Default.ChevronRight, "Próximo")
+                        }
+                    }
+                }
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToTransaction,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Novo Lançamento")
+            }
         }
     ) { paddingValues ->
         Column(
@@ -126,7 +278,7 @@ fun CashScreen(
             DailySummaryCard()
             FilterChipsRow()
             // ✅ Otimização 3: Passamos a lista estática
-            HistorySection(items = mockHistoryItems)
+            HistorySection(items = historyItems)
         }
     }
 }
@@ -272,15 +424,20 @@ private fun SummaryDirection(
 
 @Composable
 private fun StatusPill(text: String) {
+    // Check status to determine color
+    val isClosed = text.lowercase() == "fechado"
+    val backgroundColor = if(isClosed) Color(0xFFEEEEEE) else Color(0xFFDFF5E7)
+    val textColor = if(isClosed) Color(0xFF616161) else Color(0xFF0F6A37)
+
     Surface(
-        color = Color(0xFFDFF5E7),
+        color = backgroundColor,
         shape = RoundedCornerShape(999.dp)
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelLarge.copy(
-                color = Color(0xFF0F6A37),
+                color = textColor,
                 fontWeight = FontWeight.SemiBold
             )
         )
@@ -451,12 +608,3 @@ private fun FilterChip(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun CashScreenPreview() {
-    ControleDeCaixaTheme {
-        CashScreen(
-            onNavigateToUserSelection = {}
-        )
-    }
-}

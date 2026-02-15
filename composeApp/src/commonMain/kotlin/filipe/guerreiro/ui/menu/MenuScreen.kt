@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +52,20 @@ fun MenuScreen(
             icon = Icons.Default.Palette,
             text = "Galeria de cores",
             onClick = { navController.navigate("colorGallery") }
+        )
+
+        // Métodos de Pagamento
+        MenuItem(
+            icon = Icons.Default.CreditCard,
+            text = "Métodos de Pagamento",
+            onClick = { navController.navigate("paymentMethods") }
+        )
+
+        // Categorias
+        MenuItem(
+            icon = Icons.Default.Category,
+            text = "Categorias",
+            onClick = { navController.navigate("categories") }
         )
 
         // Logout / Trocar de perfil
