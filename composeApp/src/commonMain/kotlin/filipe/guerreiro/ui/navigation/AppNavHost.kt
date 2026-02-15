@@ -1,6 +1,5 @@
 package filipe.guerreiro.ui.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -10,13 +9,12 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import filipe.guerreiro.ui.cash.CashScreen
+import androidx.navigation.toRoute
+import filipe.guerreiro.ui.cash.detail.CashDetailScreen
+import filipe.guerreiro.ui.cash.listing.CashListScreen
 import filipe.guerreiro.ui.closing.ClosingScreen
 import filipe.guerreiro.ui.menu.MenuScreen
 import filipe.guerreiro.ui.home.HomeScreen
@@ -28,8 +26,6 @@ import filipe.guerreiro.ui.theme.ColorGalleryScreen
 import filipe.guerreiro.ui.paymentmethod.PaymentMethodScreen
 import filipe.guerreiro.ui.category.CategoryScreen
 import filipe.guerreiro.ui.transaction.TransactionScreen
-import org.koin.core.parameter.parametersOf
-import org.koin.compose.viewmodel.koinViewModel
 
 // Constantes de duração (Material Motion specs)
 private const val SPLASH_FADE_DURATION = 700
@@ -185,18 +181,7 @@ fun AppNavHost(
                 onOpenCashClick = { navController.navigate("opening") },
                 onCloseCashClick = { navController.navigate("closing") },
                 onNavigateToCash = { cashId ->
-                    val route = if (cashId != null) {
-                        "${BottomNavItem.Cash.route}?cashId=$cashId"
-                    } else {
-                        BottomNavItem.Cash.route
-                    }
-                    navController.navigate(route) {
-                        popUpTo(BottomNavItem.Home.route) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    navController.navigate(CashDetailRoute(cashId = cashId.toString()))
                 },
                 onNavigateToUserSelection = {
                     navController.navigate("userSelection") {
@@ -207,39 +192,29 @@ fun AppNavHost(
         }
 
         composable(
-            route = "${BottomNavItem.Cash.route}?cashId={cashId}",
-            arguments = listOf(
-                navArgument("cashId") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = "-1"
-                }
-            ),
-            enterTransition = {
-                if (isBottomNavTransition(initialState.destination.route, targetState.destination.route)) {
-                    fadeThroughEnter()
-                } else {
-                    slideInFromRight()
-                }
-            },
-            exitTransition = {
-                if (isBottomNavTransition(initialState.destination.route, targetState.destination.route)) {
-                    fadeThroughExit()
-                } else {
-                    slideOutToLeft()
-                }
-            },
-            popEnterTransition = { slideInFromLeft() },
-            popExitTransition = { slideOutToRight() },
-        ) { backStackEntry ->
-            CashScreen(
-                viewModel = koinViewModel(),
-                onNavigateToUserSelection = {
-                    navController.navigate("userSelection") {
-                        popUpTo(BottomNavItem.Home.route) { inclusive = true }
-                    }
+            route = BottomNavItem.Cash.route,
+            enterTransition = { fadeThroughEnter() },
+            exitTransition = { fadeThroughExit() }
+        ) {
+            CashListScreen(
+                onSessionClick = { id ->
+                    navController.navigate(CashDetailRoute(cashId = id.toString()))
                 },
-                onOpenCashClick = { navController.navigate("opening") },
+                onOpenCashClick = { navController.navigate("opening")}
+            )
+        }
+
+        composable<CashDetailRoute>(
+            enterTransition = { slideInFromRight() },
+            exitTransition = { slideOutToLeft() },
+            popEnterTransition = { slideInFromLeft() },
+            popExitTransition = { slideOutToRight() }
+        ) { backStackEntry ->
+            val route: CashDetailRoute = backStackEntry.toRoute()
+
+            CashDetailScreen(
+                cashId = route.cashId.toLong(),
+                onBackClick = { navController.popBackStack() },
                 onNavigateToTransaction = { navController.navigate("transaction") }
             )
         }

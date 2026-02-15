@@ -15,6 +15,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE sessionId = :sessionId ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentTransactions(sessionId: Long, limit: Int): Flow<List<Transaction>>
 
+    @Query("SELECT * FROM transactions WHERE sessionId = :sessionId ORDER BY timestamp DESC")
+    fun getAllTransactions(sessionId: Long): Flow<List<Transaction>>
+
     @Insert
     suspend fun insertTransaction(transaction: Transaction)
 

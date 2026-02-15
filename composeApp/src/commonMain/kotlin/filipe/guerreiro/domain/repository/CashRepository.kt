@@ -10,6 +10,7 @@ interface CashRepository {
     fun getCurrentCashSession(userId: Long): Flow<CashSession?>
     fun getSessionBalance(sessionId: Long): Flow<SessionBalance>
     fun getRecentTransactions(sessionId: Long, limit: Int = 5): Flow<List<Transaction>>
+    fun getAllTransactions(sessionId: Long): Flow<List<Transaction>>
     fun hasAnyCashHistory(userId: Long): Flow<Boolean>
     fun getAllSessions(userId: Long): Flow<List<CashSession>>
     fun getSessionById(sessionId: Long): Flow<CashSession?>

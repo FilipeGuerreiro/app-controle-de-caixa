@@ -58,6 +58,10 @@ class CashRepositoryImpl(
         return transactionDao.getRecentTransactions(sessionId, limit)
     }
 
+    override fun getAllTransactions(sessionId: Long): Flow<List<Transaction>> {
+        return transactionDao.getAllTransactions(sessionId)
+    }
+
     override fun hasAnyCashHistory(userId: Long): Flow<Boolean> {
         return cashDao.getSessionCount(userId).map { count -> count > 0 }
     }

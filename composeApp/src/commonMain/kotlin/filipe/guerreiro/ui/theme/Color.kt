@@ -2,90 +2,106 @@ package filipe.guerreiro.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Light Theme Colors
-val primaryLight = Color(0xFF003E1C)
+// ==============================================================================
+// PALETA DE CORES - "OCEANO & TERRACOTA"
+// ==============================================================================
 
-//val primaryLight = Color(0xFF13EC5B)
-
+// --- CORES INSTITUCIONAIS (Estrutura do App) ---
+// Azul: Confiança, Navegação, Ações de Sistema (Salvar, Confirmar)
+val primaryLight = Color(0xFF005AC1)
 val onPrimaryLight = Color(0xFFFFFFFF)
-val primaryContainerLight = Color(0xFF1E5631)
-val onPrimaryContainerLight = Color(0xFF8FCA9B)
-val secondaryLight = Color(0xFF47594C)
+val primaryContainerLight = Color(0xFFD8E2FF)
+val onPrimaryContainerLight = Color(0xFF001A41)
+
+// Cinza Azulado: Elementos secundários, bordas suaves
+val secondaryLight = Color(0xFF575E71)
 val onSecondaryLight = Color(0xFFFFFFFF)
-val secondaryContainerLight = Color(0xFF5F7164)
-val onSecondaryContainerLight = Color(0xFFE1F5E4)
-val tertiaryLight = Color(0xFF705D00)
+val secondaryContainerLight = Color(0xFFDBE2F9)
+val onSecondaryContainerLight = Color(0xFF141B2C)
+
+// Laranja/Terracota: Ações de Venda (Comida), Destaque, Botões Flutuantes (FAB)
+val tertiaryLight = Color(0xFF984816)
 val onTertiaryLight = Color(0xFFFFFFFF)
-val tertiaryContainerLight = Color(0xFFFFD700)
-val onTertiaryContainerLight = Color(0xFF705E00)
-val errorLight = Color(0xFF840015)
+val tertiaryContainerLight = Color(0xFFFFDBC9)
+val onTertiaryContainerLight = Color(0xFF341000)
+
+// --- CORES SEMÂNTICAS (Negócio / Financeiro) ---
+// Estas cores NÃO devem ser usadas para botões de navegação, apenas para DADOS.
+
+// Lucro / Entrada de Dinheiro (Verde Financeiro)
+val profitLight = Color(0xFF006C4C) 
+val onProfitLight = Color(0xFFFFFFFF)
+val profitContainerLight = Color(0xFF89F8C6)
+
+// Prejuízo / Saída / Erro (Vermelho Alerta)
+val errorLight = Color(0xFFBA1A1A)
 val onErrorLight = Color(0xFFFFFFFF)
-val errorContainerLight = Color(0xFFB00020)
-val onErrorContainerLight = Color(0xFFFFBBB8)
-val backgroundLight = Color(0xFFF8FAF4)
-val onBackgroundLight = Color(0xFF191C19)
-val surfaceLight = Color(0xFFFCF8F8)
-val onSurfaceLight = Color(0xFF1C1B1B)
-val surfaceVariantLight = Color(0xFFE0E3E3)
-val onSurfaceVariantLight = Color(0xFF444748)
-val outlineLight = Color(0xFF747878)
-val outlineVariantLight = Color(0xFFC4C7C7)
+val errorContainerLight = Color(0xFFFFDAD6)
+val onErrorContainerLight = Color(0xFF410002)
+
+// --- FUNDOS E NEUTROS ---
+val backgroundLight = Color(0xFFFEFBFF)
+val onBackgroundLight = Color(0xFF1B1B1F)
+val surfaceLight = Color(0xFFFEFBFF)
+val onSurfaceLight = Color(0xFF1B1B1F)
+val surfaceVariantLight = Color(0xFFE1E2EC)
+val onSurfaceVariantLight = Color(0xFF44474F)
+val outlineLight = Color(0xFF74777F)
+val outlineVariantLight = Color(0xFFC4C6D0)
 val scrimLight = Color(0xFF000000)
-val inverseSurfaceLight = Color(0xFF313030)
-val inverseOnSurfaceLight = Color(0xFFF4F0EF)
-val inversePrimaryLight = Color(0xFF99D4A4)
-val surfaceDimLight = Color(0xFFDDD9D9)
-val surfaceBrightLight = Color(0xFFFCF8F8)
+val inverseSurfaceLight = Color(0xFF303033)
+val inverseOnSurfaceLight = Color(0xFFF2F0F4)
+val inversePrimaryLight = Color(0xFFADC6FF)
+val surfaceDimLight = Color(0xFFD9D9E0)
+val surfaceBrightLight = Color(0xFFFEFBFF)
 val surfaceContainerLowestLight = Color(0xFFFFFFFF)
-val surfaceContainerLowLight = Color(0xFFF6F3F2)
-val surfaceContainerLight = Color(0xFFF1EDEC)
-val surfaceContainerHighLight = Color(0xFFEBE7E7)
-val surfaceContainerHighestLight = Color(0xFFE5E2E1)
+val surfaceContainerLowLight = Color(0xFFF3F3FA)
+val surfaceContainerLight = Color(0xFFEDEDF4)
+val surfaceContainerHighLight = Color(0xFFE7E8EE)
+val surfaceContainerHighestLight = Color(0xFFE2E2E9)
 
-// Dark Theme Colors
-val primaryDark = Color(0xFF99D4A4)
-val onPrimaryDark = Color(0xFF003919)
-val primaryContainerDark = Color(0xFF1E5631)
-val onPrimaryContainerDark = Color(0xFF8FCA9B)
-val secondaryDark = Color(0xFFB8CBBC)
-val onSecondaryDark = Color(0xFF233429)
-val secondaryContainerDark = Color(0xFF5F7164)
-val onSecondaryContainerDark = Color(0xFFE1F5E4)
-val tertiaryDark = Color(0xFFFFF6DF)
-val onTertiaryDark = Color(0xFF3A3000)
-val tertiaryContainerDark = Color(0xFFFFD700)
-val onTertiaryContainerDark = Color(0xFF705E00)
-val errorDark = Color(0xFFFFB3AF)
-val onErrorDark = Color(0xFF68000F)
-val errorContainerDark = Color(0xFFB00020)
-val onErrorContainerDark = Color(0xFFFFBBB8)
-val backgroundDark = Color(0xFF111411)
-val onBackgroundDark = Color(0xFFE1E3DD)
-val surfaceDark = Color(0xFF141313)
-val onSurfaceDark = Color(0xFFE5E2E1)
-val surfaceVariantDark = Color(0xFF444748)
-val onSurfaceVariantDark = Color(0xFFC4C7C7)
+// --- DARK THEME ---
+val primaryDark = Color(0xFFADC6FF)
+val onPrimaryDark = Color(0xFF002E69)
+val primaryContainerDark = Color(0xFF004494)
+val onPrimaryContainerDark = Color(0xFFD8E2FF)
+
+val secondaryDark = Color(0xFFBFC6DC)
+val onSecondaryDark = Color(0xFF293041)
+val secondaryContainerDark = Color(0xFF3F4759)
+val onSecondaryContainerDark = Color(0xFFDBE2F9)
+
+val tertiaryDark = Color(0xFFFFB68F)
+val onTertiaryDark = Color(0xFF542100)
+val tertiaryContainerDark = Color(0xFF753400)
+val onTertiaryContainerDark = Color(0xFFFFDBC9)
+
+// Semântica Dark
+val profitDark = Color(0xFF6CDBAA) // Verde claro luminoso
+val onProfitDark = Color(0xFF003825)
+val profitContainerDark = Color(0xFF005138)
+
+val errorDark = Color(0xFFFFB4AB)
+val onErrorDark = Color(0xFF690005)
+val errorContainerDark = Color(0xFF93000A)
+val onErrorContainerDark = Color(0xFFFFDAD6)
+
+val backgroundDark = Color(0xFF0A0A0A) // Deep Black
+val onBackgroundDark = Color(0xFFE3E2E6)
+val surfaceDark = Color(0xFF0A0A0A) // Same as background for full immersion
+val onSurfaceDark = Color(0xFFE3E2E6)
+val surfaceVariantDark = Color(0xFF44474F)
+val onSurfaceVariantDark = Color(0xFFC4C6D0)
 val outlineDark = Color(0xFF8E9192)
-val outlineVariantDark = Color(0xFF444748)
+val outlineVariantDark = Color(0xFF44474F)
 val scrimDark = Color(0xFF000000)
-val inverseSurfaceDark = Color(0xFFE5E2E1)
-val inverseOnSurfaceDark = Color(0xFF313030)
-val inversePrimaryDark = Color(0xFF326942)
-val surfaceDimDark = Color(0xFF141313)
-val surfaceBrightDark = Color(0xFF3A3939)
-val surfaceContainerLowestDark = Color(0xFF0E0E0E)
-val surfaceContainerLowDark = Color(0xFF1C1B1B)
-val surfaceContainerDark = Color(0xFF201F1F)
-val surfaceContainerHighDark = Color(0xFF2A2A2A)
-val surfaceContainerHighestDark = Color(0xFF353434)
-
-// Extended Colors
-val extendedColorLight = Color(0xFF855400)
-val onExtendedColorLight = Color(0xFFFFFFFF)
-val extendedColorContainerLight = Color(0xFFFFA500)
-val onExtendedColorContainerLight = Color(0xFF684000)
-
-val extendedColorDark = Color(0xFFFFCB8C)
-val onExtendedColorDark = Color(0xFF462A00)
-val extendedColorContainerDark = Color(0xFFFFA500)
-val onExtendedColorContainerDark = Color(0xFF684000)
+val inverseSurfaceDark = Color(0xFFE3E2E6)
+val inverseOnSurfaceDark = Color(0xFF303033)
+val inversePrimaryDark = Color(0xFF005AC1)
+val surfaceDimDark = Color(0xFF0A0A0A)
+val surfaceBrightDark = Color(0xFF37393E)
+val surfaceContainerLowestDark = Color(0xFF0C0E13)
+val surfaceContainerLowDark = Color(0xFF1C1C1E) // Visible Card 1
+val surfaceContainerDark = Color(0xFF2C2C2E) // Visible Card 2
+val surfaceContainerHighDark = Color(0xFF3A3A3C)
+val surfaceContainerHighestDark = Color(0xFF48484A)

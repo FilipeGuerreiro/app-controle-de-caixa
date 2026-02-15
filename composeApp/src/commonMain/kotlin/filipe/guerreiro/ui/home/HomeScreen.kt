@@ -49,6 +49,7 @@ import filipe.guerreiro.ui.components.RecentActivitiesSkeleton
 import filipe.guerreiro.ui.components.SkeletonBox
 import filipe.guerreiro.ui.components.SkeletonCircle
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
+import filipe.guerreiro.ui.theme.financial
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -142,7 +143,7 @@ fun FirstAccessCard(
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         border = BorderStroke(
             width = 1.dp,
@@ -340,7 +341,7 @@ fun CashStatusCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -424,7 +425,7 @@ fun CashStatusCard(
                         text = "Entradas: $totalIncome",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.financial.profit
                         ),
                         modifier = Modifier.weight(1f)
                     )
@@ -564,12 +565,12 @@ fun ActivityItem(activity: RecentActivity) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val bgColor = if (activity.isIncome) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    MaterialTheme.financial.profitContainer.copy(alpha = 0.5f)
                 } else {
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+                    MaterialTheme.colorScheme.errorContainer
                 }
                 val iconColor = if (activity.isIncome) {
-                    MaterialTheme.colorScheme.primary
+                    MaterialTheme.financial.profit
                 } else {
                     MaterialTheme.colorScheme.error
                 }
@@ -608,7 +609,7 @@ fun ActivityItem(activity: RecentActivity) {
 
             // Valor formatado com cor
             val amountColor = if (activity.isIncome) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.financial.profit
             } else {
                 MaterialTheme.colorScheme.error
             }

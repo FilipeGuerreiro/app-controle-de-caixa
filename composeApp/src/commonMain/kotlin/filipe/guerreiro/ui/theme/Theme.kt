@@ -5,6 +5,43 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+
+// ==============================================================================
+// DOCUMENTAÇÃO PARA AGENTES DE UI (LLMs)
+// Use este guia para escolher a cor correta em cada componente:
+//
+// 1. ESTRUTURA E NAVEGAÇÃO:
+//    - TopAppBar, BottomNavigation, Botões de Confirmar -> Use [primary]
+//    - Botões de Cancelar/Voltar, Bordas -> Use [outline] ou [secondary]
+//
+// 2. AÇÕES DE DESTAQUE (VENDAS):
+//    - Botão Flutuante (FAB) "Nova Venda" -> Use [tertiary]
+//    - Ícones de comida ou destaque visual -> Use [tertiary]
+//
+// 3. DADOS FINANCEIROS (IMPORTANTE):
+//    - Valor monetário positivo (Entrada/Lucro) -> Use [MaterialTheme.financial.profit]
+//    - Fundo de um card de lucro -> Use [MaterialTheme.financial.profitContainer]
+//    - Valor monetário negativo (Saída/Prejuízo) -> Use [error]
+// ==============================================================================
+
+/**
+ * Extensão de cores para o domínio financeiro.
+ * Adiciona cores que não existem no Material 3 padrão.
+ */
+@Immutable
+data class FinancialColors(
+    val profit: Color = Color.Unspecified,
+    val onProfit: Color = Color.Unspecified,
+    val profitContainer: Color = Color.Unspecified,
+    val onProfitContainer: Color = Color.Unspecified
+)
+
+// Cria o LocalProvider para as cores financeiras
+val LocalFinancialColors = staticCompositionLocalOf { FinancialColors() }
 
 private val LightColorScheme = lightColorScheme(
     primary = primaryLight,
@@ -82,16 +119,42 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 
+// Definição das cores financeiras Light/Dark
+private val LightFinancialColors = FinancialColors(
+    profit = profitLight,
+    onProfit = onProfitLight,
+    profitContainer = profitContainerLight,
+    onProfitContainer = Color(0xFF002114) // Ajuste manual para contraste se necessário
+)
+
+private val DarkFinancialColors = FinancialColors(
+    profit = profitDark,
+    onProfit = onProfitDark,
+    profitContainer = profitContainerDark,
+    onProfitContainer = Color(0xFF89F8C6)
+)
+
 @Composable
 fun ControleDeCaixaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    // Seleciona as cores financeiras corretas
+    val financialColors = if (darkTheme) DarkFinancialColors else LightFinancialColors
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content
-    )
+    // Injeta as cores financeiras na árvore de composição
+    CompositionLocalProvider(LocalFinancialColors provides financialColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content
+        )
+    }
 }
+
+// Atalho para acessar as cores financeiras de qualquer lugar no código
+// Exemplo de uso: MaterialTheme.financial.profit
+val MaterialTheme.financial: FinancialColors
+    @Composable
+    get() = LocalFinancialColors.current

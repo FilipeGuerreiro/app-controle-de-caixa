@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
+import filipe.guerreiro.ui.theme.financial
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -128,7 +129,7 @@ fun OpeningScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -198,7 +199,7 @@ fun OpeningScreenContent(
                             Text(
                                 text = "R$ ",
                                 style = currencyTextStyle.copy(
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.financial.profit
                                 )
                             )
                         },
@@ -257,7 +258,7 @@ fun OpeningScreenContent(
                                     text = state.suggestedAmount.toCurrencyString(),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = MaterialTheme.financial.profit
                                     )
                                 )
                             }

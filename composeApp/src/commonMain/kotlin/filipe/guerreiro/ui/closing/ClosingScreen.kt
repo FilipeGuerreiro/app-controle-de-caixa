@@ -55,6 +55,7 @@ import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.ui.components.AnimatedBalanceText
 import filipe.guerreiro.ui.components.SkeletonBox
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
+import filipe.guerreiro.ui.theme.financial
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -178,7 +179,7 @@ fun ClosingSummaryCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -201,14 +202,14 @@ fun ClosingSummaryCard(
                 )
                 
                 Surface(
-                    color = Color(0xFFDFF5E7),
+                    color = MaterialTheme.financial.profitContainer,
                     shape = RoundedCornerShape(999.dp)
                 ) {
                     Text(
                         text = "Aberto",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge.copy(
-                            color = Color(0xFF0F6A37),
+                            color = MaterialTheme.financial.profit,
                             fontWeight = FontWeight.SemiBold
                         )
                     )
@@ -258,18 +259,18 @@ fun ClosingSummaryCard(
                 FlowItem(
                     label = "Entradas",
                     value = state.closingData.incomeBalance ?: 0L,
-                    color = Color(0xFF0F6A37),
+                    color = MaterialTheme.financial.profit,
                     icon = Icons.Default.ArrowUpward,
-                    bgColor = Color(0xFFDFF5E7),
+                    bgColor = MaterialTheme.financial.profitContainer,
                     state.isLoading
                 )
                 
                 FlowItem(
                     label = "Saídas",
                     value = state.closingData.expenseBalance ?: 0L,
-                    color = Color(0xFFC62828),
+                    color = MaterialTheme.colorScheme.error,
                     icon = Icons.Default.ArrowDownward,
-                    bgColor = Color(0xFFFDE8E8),
+                    bgColor = MaterialTheme.colorScheme.errorContainer,
                     state.isLoading
                 )
             }
@@ -339,7 +340,7 @@ fun ClosingDetailsCard() {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {

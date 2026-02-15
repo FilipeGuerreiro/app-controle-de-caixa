@@ -110,19 +110,6 @@ fun ColorGalleryScreen() {
                 ColorItem("surfaceContainerHighestDark", surfaceContainerHighestDark)
             )
         ),
-        ColorSection(
-            title = "Cores estendidas",
-            items = listOf(
-                ColorItem("extendedColorLight", extendedColorLight),
-                ColorItem("onExtendedColorLight", onExtendedColorLight),
-                ColorItem("extendedColorContainerLight", extendedColorContainerLight),
-                ColorItem("onExtendedColorContainerLight", onExtendedColorContainerLight),
-                ColorItem("extendedColorDark", extendedColorDark),
-                ColorItem("onExtendedColorDark", onExtendedColorDark),
-                ColorItem("extendedColorContainerDark", extendedColorContainerDark),
-                ColorItem("onExtendedColorContainerDark", onExtendedColorContainerDark)
-            )
-        )
     )
 
     LazyColumn(

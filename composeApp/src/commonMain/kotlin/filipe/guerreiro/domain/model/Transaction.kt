@@ -7,6 +7,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import filipe.guerreiro.ui.cash.detail.HistoryItemUi
 import filipe.guerreiro.ui.home.RecentActivity
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -37,7 +38,7 @@ data class Transaction(
 
 enum class TransactionType { INCOME, EXPENSE }
 
-;fun Transaction.toRecentActivity(): RecentActivity {
+fun Transaction.toRecentActivity(): RecentActivity {
     val isIncome = type == TransactionType.INCOME
     val localDateTime =
         timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
@@ -60,5 +61,19 @@ enum class TransactionType { INCOME, EXPENSE }
             Icons.Default.ArrowUpward
         else
             Icons.Default.ArrowDownward
+    )
+}
+
+fun Transaction.toHistoryUi(): HistoryItemUi {
+    val isIncome = type.name == TransactionType.INCOME.name
+
+    return HistoryItemUi(
+        id = sessionId.toString(),
+        title = description,
+        time = timestamp.toLocalDateTime(TimeZone.currentSystemDefault()).toString(),
+        method = type.name,
+        amountLabel = amount.toCurrencyString(),
+        isIncome = isIncome,
+        icon = if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
     )
 }
