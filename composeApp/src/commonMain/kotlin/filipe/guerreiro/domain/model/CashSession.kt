@@ -20,7 +20,7 @@ import kotlin.time.Instant
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["userId"])]
+    indices = [Index(value = ["userId", "openingTimeStamp"])]
 )
 data class CashSession(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -35,13 +35,15 @@ enum class CashStatusType { OPEN, CLOSED }
 
 fun CashSession.toUiModel(): CashSessionUi {
     val date = openingTimeStamp.toLocalDateTime(TimeZone.currentSystemDefault())
-    val formattedDate = "${date.day}/${date.month.number}/${date.year}"
+    val formattedDate = "${date.dayOfMonth}/${date.monthNumber}/${date.year}"
 
     return CashSessionUi(
         id = id,
         date = formattedDate,
         status = if (status == CashStatusType.OPEN) "Aberto" else "Fechado",
         finalBalance = initialAmount.toCurrencyString(),
-        isCurrent = status == CashStatusType.OPEN
+        initialAmount = initialAmount.toCurrencyString(),
+        isCurrent = status == CashStatusType.OPEN,
+        timestamp = openingTimeStamp.toEpochMilliseconds()
     )
 }

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,22 +38,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import filipe.guerreiro.domain.model.Category
 import filipe.guerreiro.domain.model.TransactionType
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryScreen(
     onBackClick: () -> Unit,
-    viewModel: CategoryViewModel = viewModel { CategoryViewModel() }
+    viewModel: CategoryViewModel = koinViewModel()
 ) {
-    val categories by viewModel.categories.collectAsState()
+
+    val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Entradas", "Saídas")
     val selectedType = if (selectedTab == 0) TransactionType.INCOME else TransactionType.EXPENSE
 
-    var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -70,7 +71,7 @@ fun CategoryScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddDialog = true },
+                onClick = viewModel::onShowAddDialog,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -93,7 +94,7 @@ fun CategoryScreen(
                 }
             }
 
-            val filteredCategories = categories.filter { it.type == selectedType }
+            val filteredCategories = uiState.categories.filter { it.type == selectedType }
 
             if (filteredCategories.isEmpty()) {
                 Box(
@@ -115,21 +116,41 @@ fun CategoryScreen(
                     items(filteredCategories, key = { it.id }) { category ->
                         CategoryItem(
                             category = category,
-                            onDeleteClick = { viewModel.deleteCategory(category.id) }
+                            onDeleteClick = { viewModel.onShowDeleteDialog(category) },
+                            onEditClick = { viewModel.onShowEditDialog(category) }
                         )
                     }
                 }
             }
         }
 
-        if (showAddDialog) {
+        if (uiState.showAddDialog) {
             AddCategoryDialog(
                 type = selectedType,
-                onDismiss = { showAddDialog = false },
-                onConfirm = { name ->
-                    viewModel.addCategory(name, selectedType)
-                    showAddDialog = false
-                }
+                name = uiState.dialogNameInput,
+                onNameChange = viewModel::onDialogNameChange,
+                onDismiss = viewModel::onDismissAddDialog,
+                onConfirm = { viewModel.onConfirmAddDialog(selectedType) },
+                errorMessage = uiState.dialogError
+            )
+        }
+
+        if (uiState.showEditDialog) {
+            EditCategoryDialog(
+                type = selectedType,
+                name = uiState.editDialogNameInput,
+                onNameChange = viewModel::onEditDialogNameChange,
+                onDismiss = viewModel::onDismissEditDialog,
+                onConfirm = { viewModel.onConfirmEditDialog(selectedType) },
+                errorMessage = uiState.editDialogError
+            )
+        }
+
+        if (uiState.showDeleteDialog) {
+            ConfirmDeleteCategoryDialog(
+                name = uiState.deleteDialogName,
+                onConfirm = viewModel::onConfirmDeleteDialog,
+                onDismiss = viewModel::onDismissDeleteDialog
             )
         }
     }
@@ -138,12 +159,13 @@ fun CategoryScreen(
 @Composable
 fun CategoryItem(
     category: Category,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Row(
@@ -158,12 +180,21 @@ fun CategoryItem(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            IconButton(onClick = onDeleteClick) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Deletar",
-                    tint = MaterialTheme.colorScheme.error
-                )
+            Row {
+                IconButton(onClick = onEditClick) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Deletar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
@@ -172,11 +203,12 @@ fun CategoryItem(
 @Composable
 fun AddCategoryDialog(
     type: TransactionType,
+    name: String,
+    onNameChange: (String) -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: () -> Unit,
+    errorMessage: String?
 ) {
-    var name by remember { mutableStateOf("") }
-    var isError by remember { mutableStateOf(false) }
     val typeName = if (type == TransactionType.INCOME) "entrada" else "saída"
 
     AlertDialog(
@@ -186,18 +218,15 @@ fun AddCategoryDialog(
             Column {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = {
-                        name = it
-                        isError = false
-                    },
+                    onValueChange = onNameChange,
                     label = { Text("Nome da categoria") },
                     singleLine = true,
-                    isError = isError,
+                    isError = errorMessage != null,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (isError) {
+                if (errorMessage != null) {
                     Text(
-                        text = "O nome não pode ser vazio",
+                        text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -207,15 +236,83 @@ fun AddCategoryDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = {
-                    if (name.isBlank()) {
-                        isError = true
-                    } else {
-                        onConfirm(name)
-                    }
-                }
+                onClick = onConfirm
             ) {
                 Text("Adicionar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditCategoryDialog(
+    type: TransactionType,
+    name: String,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    errorMessage: String?
+) {
+    val typeName = if (type == TransactionType.INCOME) "entrada" else "saída"
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar Categoria de $typeName") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text("Nome da categoria") },
+                    singleLine = true,
+                    isError = errorMessage != null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm
+            ) {
+                Text("Salvar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun ConfirmDeleteCategoryDialog(
+    name: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Excluir categoria") },
+        text = {
+            Text("Tem certeza que deseja excluir \"$name\"?")
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Excluir")
             }
         },
         dismissButton = {

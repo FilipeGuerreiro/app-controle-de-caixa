@@ -63,7 +63,11 @@ fun CashDetailScreen(
             ) {
                 // Reaproveitamos seus componentes visuais da CashScreen original
                 DailySummaryCard(uiState.summary)
-                HistorySection(uiState.historyItems)
+                HistorySection(
+                    items = uiState.historyItems,
+                    isOpen = uiState.summary.status == "Aberto",
+                    onAddTransaction = onNavigateToTransaction
+                )
             }
         }
     }

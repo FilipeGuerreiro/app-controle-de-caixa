@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import controledecaixa.composeapp.generated.resources.Res
-import controledecaixa.composeapp.generated.resources.logo_app_final_kmp
+import controledecaixa.composeapp.generated.resources.source_logo_v2
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -74,7 +74,7 @@ fun LoadingContent() {
             modifier = Modifier.padding(horizontal = 32.dp)
         ) {
             Image(
-                painter = painterResource(Res.drawable.logo_app_final_kmp),
+                painter = painterResource(Res.drawable.source_logo_v2),
                 contentDescription = "Logo App Controle de Caixa",
                 modifier = Modifier
                     .size(120.dp)

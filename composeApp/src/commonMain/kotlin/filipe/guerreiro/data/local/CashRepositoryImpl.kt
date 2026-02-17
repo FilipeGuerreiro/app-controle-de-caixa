@@ -14,6 +14,10 @@ import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 import kotlin.time.Instant
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
+
 class CashRepositoryImpl(
     private val cashDao: CashDao,
     private val transactionDao: TransactionDao
@@ -67,40 +71,45 @@ class CashRepositoryImpl(
     }
 
     override suspend fun getSuggestedInitialAmount(userId: Long): Long {
-        val lastSession = cashDao.getLastClosedSession(userId) ?: return 0L
+        return withContext(Dispatchers.IO) {
+            val lastSession = cashDao.getLastClosedSession(userId) ?: return@withContext 0L
 
-        val incomes = transactionDao.getIncomeSum(lastSession.id).first() ?: 0L
-        val expenses = transactionDao.getExpenseSum(lastSession.id).first() ?: 0L
+            val incomes = transactionDao.getIncomeSum(lastSession.id).first() ?: 0L
+            val expenses = transactionDao.getExpenseSum(lastSession.id).first() ?: 0L
 
-        return lastSession.initialAmount + incomes - expenses
+            lastSession.initialAmount + incomes - expenses
+        }
     }
 
     override suspend fun createSession(initialAmount: Long, userId: Long) {
-        val activeSession = cashDao.getCurrentCashSession(userId).first()
+        withContext(Dispatchers.IO) {
+            val activeSession = cashDao.getCurrentCashSession(userId).first()
 
-        if (activeSession != null && activeSession.status == CashStatusType.OPEN) {
-            throw IllegalStateException("Já existe um caixa aberto, Feche-o antes de abrir um novo.")
+            if (activeSession != null && activeSession.status == CashStatusType.OPEN) {
+                throw IllegalStateException("Já existe um caixa aberto, Feche-o antes de abrir um novo.")
+            }
+
+            val newSession = CashSession(
+                userId = userId,
+                openingTimeStamp = Clock.System.now(),
+                initialAmount = initialAmount,
+                status = CashStatusType.OPEN
+            )
+
+            cashDao.insertSession(newSession)
         }
-
-        val newSession = CashSession(
-            userId = userId,
-            openingTimeStamp = Clock.System.now(),
-            initialAmount = initialAmount,
-            status = CashStatusType.OPEN
-        )
-
-        cashDao.insertSession(newSession)
     }
 
     override suspend fun closeSession(userId: Long) {
-        val activeSession = cashDao.getCurrentCashSession(userId).first() ?: throw IllegalStateException("Nenhum caixa aberto encontrado.")
+        withContext(Dispatchers.IO) {
+            val activeSession = cashDao.getCurrentCashSession(userId).first() ?: throw IllegalStateException("Nenhum caixa aberto encontrado.")
 
-        if (activeSession.status == CashStatusType.CLOSED) {
-            throw IllegalStateException("O caixa atual já está fechado.")
+            if (activeSession.status == CashStatusType.CLOSED) {
+                throw IllegalStateException("O caixa atual já está fechado.")
+            }
+
+            val closingTime = Clock.System.now()
+            cashDao.closeSession(activeSession.id, closingTime = closingTime)
         }
-
-        val closingTime = Clock.System.now()
-        cashDao.closeSession(activeSession.id, closingTime = closingTime)
-
     }
 }

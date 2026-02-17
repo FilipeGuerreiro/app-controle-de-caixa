@@ -15,6 +15,6 @@ fun SessionBalance.toSummaryUi(statusType: CashStatusType): CashSummaryUi {
         currentBalance = currentBalance.toCurrencyString(),
         totalInflow = totalIncomes.toCurrencyString(),
         totalOutflow = totalExpenses.toCurrencyString(),
-        status = statusType.name
+        status = if (statusType.name == "OPEN") "Aberto" else "Fechado"
     )
 }

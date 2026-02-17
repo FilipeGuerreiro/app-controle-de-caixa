@@ -223,7 +223,7 @@ fun EmptyStateMessage(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
@@ -457,8 +457,8 @@ fun CashStatusCard(
                         onClick = if (isCashOpen) onCloseCashClick else onOpenCashClick,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isCashOpen) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            containerColor = if (isCashOpen) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            contentColor = if (isCashOpen) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
                         ),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
@@ -550,7 +550,7 @@ fun ActivityItem(activity: RecentActivity) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Row(
             modifier = Modifier

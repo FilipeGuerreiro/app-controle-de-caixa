@@ -24,7 +24,11 @@ import androidx.compose.ui.unit.dp
 import filipe.guerreiro.ui.theme.financial
 
 @Composable
-fun HistorySection(items: List<HistoryItemUi>) {
+fun HistorySection(
+    items: List<HistoryItemUi>,
+    isOpen: Boolean,
+    onAddTransaction: () -> Unit = {}
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Lançamentos",
@@ -33,10 +37,9 @@ fun HistorySection(items: List<HistoryItemUi>) {
         )
 
         if (items.isEmpty()) {
-            Text(
-                text = "Nenhum lançamento neste caixa.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            EmptyTransactionsState(
+                isOpen = isOpen,
+                onAddTransaction = onAddTransaction
             )
         } else {
             items.forEach { item ->

@@ -29,7 +29,7 @@ fun QuickActionCard(
             .fillMaxWidth()
             .heightIn(min = 80.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
         Row(

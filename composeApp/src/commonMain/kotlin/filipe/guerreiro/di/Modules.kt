@@ -5,18 +5,24 @@ import filipe.guerreiro.core.startup.AppViewModel
 import filipe.guerreiro.core.startup.StartupResolver
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.data.local.CashRepositoryImpl
+import filipe.guerreiro.data.local.CategoryRepositoryImpl
+import filipe.guerreiro.data.local.PaymentMethodRepositoryImpl
 import filipe.guerreiro.data.local.UserRepositoryImpl
 import filipe.guerreiro.data.local.getDatabaseBuilder
 import filipe.guerreiro.data.session.SessionManagerImpl
 import filipe.guerreiro.domain.repository.CashRepository
+import filipe.guerreiro.domain.repository.CategoryRepository
+import filipe.guerreiro.domain.repository.PaymentMethodRepository
 import filipe.guerreiro.domain.repository.UserRepository
 import filipe.guerreiro.domain.session.SessionManager
 import filipe.guerreiro.ui.cash.detail.CashDetailViewModel
 import filipe.guerreiro.ui.cash.listing.CashListViewModel
+import filipe.guerreiro.ui.category.CategoryViewModel
 import filipe.guerreiro.ui.closing.ClosingViewModel
 import filipe.guerreiro.ui.home.HomeViewModel
 import filipe.guerreiro.ui.navigation.NavigationViewModel
 import filipe.guerreiro.ui.opening.OpeningViewModel
+import filipe.guerreiro.ui.paymentmethod.PaymentMethodViewModel
 import filipe.guerreiro.ui.register.RegisterViewModel
 import filipe.guerreiro.ui.userselection.UserSelectionViewModel
 import org.koin.core.module.dsl.viewModel
@@ -37,10 +43,15 @@ val appModule = module {
     single { get<AppDatabase>().cashDao() }
     single { get<AppDatabase>().transactionDao() }
     single { get<AppDatabase>().userDao() }
+    single { get<AppDatabase>().paymentMethodDao() }
+    single { get<AppDatabase>().categoryDao() }
 
     // Repositorys
     single<CashRepository> { CashRepositoryImpl(get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get()) }
+    single<PaymentMethodRepository> { PaymentMethodRepositoryImpl(get()) }
+    single<CategoryRepository> { CategoryRepositoryImpl(get()) }
+
 
     // Session Manager - singleton para gerenciar estado de autenticação
     single<SessionManager> { SessionManagerImpl(get(), get()) }
@@ -75,6 +86,14 @@ val appModule = module {
 
     viewModel {
         UserSelectionViewModel(get(), get())
+    }
+
+    viewModel {
+        PaymentMethodViewModel(get(), get())
+    }
+
+    viewModel {
+        CategoryViewModel(get(), get())
     }
 }
 

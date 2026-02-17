@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import filipe.guerreiro.data.local.dao.CashDao
+import filipe.guerreiro.data.local.dao.CategoryDao
+import filipe.guerreiro.data.local.dao.PaymentMethodDao
 import filipe.guerreiro.data.local.dao.TransactionDao
 import filipe.guerreiro.data.local.dao.UserDao
 import filipe.guerreiro.domain.model.CashSession
@@ -23,14 +25,15 @@ import filipe.guerreiro.domain.model.User
         PaymentMethod::class,
         User::class
                ],
-    version = 2,
-    exportSchema = true
+    version = 3,
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cashDao(): CashDao
     abstract fun transactionDao(): TransactionDao
-
     abstract fun userDao(): UserDao
+    abstract fun categoryDao(): CategoryDao
+    abstract fun paymentMethodDao(): PaymentMethodDao
 }

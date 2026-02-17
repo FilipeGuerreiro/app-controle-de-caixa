@@ -200,7 +200,6 @@ fun AppNavHost(
                 onSessionClick = { id ->
                     navController.navigate(CashDetailRoute(cashId = id.toString()))
                 },
-                onOpenCashClick = { navController.navigate("opening")}
             )
         }
 
@@ -261,7 +260,12 @@ fun AppNavHost(
             popExitTransition = { slideOutToRight() },
         ) {
             PaymentMethodScreen(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onNavigateToUserSelection = {
+                    navController.navigate("userSelection") {
+                        popUpTo(BottomNavItem.Home.route) { inclusive = true }
+                    }
+                }
             )
         }
 

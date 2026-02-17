@@ -124,14 +124,14 @@ private val LightFinancialColors = FinancialColors(
     profit = profitLight,
     onProfit = onProfitLight,
     profitContainer = profitContainerLight,
-    onProfitContainer = Color(0xFF002114) // Ajuste manual para contraste se necessário
+    onProfitContainer = Color(0xFF003300) // Verde escuro para contraste no container claro
 )
 
 private val DarkFinancialColors = FinancialColors(
     profit = profitDark,
     onProfit = onProfitDark,
     profitContainer = profitContainerDark,
-    onProfitContainer = Color(0xFF89F8C6)
+    onProfitContainer = Color(0xFFC8E6C9) // Verde claro para contraste no container escuro
 )
 
 @Composable

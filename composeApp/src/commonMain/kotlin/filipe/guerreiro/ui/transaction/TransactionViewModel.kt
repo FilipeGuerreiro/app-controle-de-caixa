@@ -6,15 +6,13 @@ import filipe.guerreiro.domain.model.Category
 import filipe.guerreiro.domain.model.PaymentMethod
 import filipe.guerreiro.domain.model.TransactionType
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class TransactionUiState(
-    val amount: String = "",
+    val amountInCents: Long = 0L,
     val description: String = "",
     val type: TransactionType = TransactionType.INCOME,
     val selectedCategory: Category? = null,
@@ -55,12 +53,8 @@ class TransactionViewModel : ViewModel() {
         }
     }
 
-    fun onAmountChange(newAmount: String) {
-        // Simple filter to allow only numbers and one dot/comma
-        // For a real app, use a proper currency formatter
-        if (newAmount.all { it.isDigit() || it == '.' || it == ',' }) {
-             _uiState.update { it.copy(amount = newAmount) }
-        }
+    fun onAmountChange(newAmount: Long) {
+        _uiState.update { it.copy(amountInCents = newAmount) }
     }
 
     fun onDescriptionChange(newDescription: String) {
