@@ -60,7 +60,7 @@ class OpeningViewModel(
             suggestedAmountState.value = suggested
 
             // Pré-preenche o input com o valor sugerido
-            if (suggested != null && suggested > 0) {
+            if (suggested > 0) {
                 inputState.update {
                     it.copy(amountInCents = suggested)
                 }

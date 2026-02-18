@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PaymentMethodDao {
-    @Query("SELECT * FROM payment_methods WHERE userId = :userId")
+    @Query("SELECT * FROM payment_methods WHERE userId = :userId AND isActive = 1")
     fun getAll(userId: Long): Flow<List<PaymentMethod>>
 
-    @Query("SELECT * FROM payment_methods WHERE name = :name AND userId = :userId LIMIT 1")
+    @Query("SELECT * FROM payment_methods WHERE name = :name AND userId = :userId AND isActive = 1 LIMIT 1")
     suspend fun getByName(userId: Long, name: String): PaymentMethod?
 
     @Insert
@@ -20,6 +20,6 @@ interface PaymentMethodDao {
     @Query("UPDATE payment_methods SET name = :name WHERE id = :id")
     suspend fun update(id: Long, name: String)
 
-    @Query("DELETE FROM payment_methods WHERE id = :id")
+    @Query("UPDATE payment_methods SET isActive = 0 WHERE id = :id")
     suspend fun deleteById(id: Long)
 }

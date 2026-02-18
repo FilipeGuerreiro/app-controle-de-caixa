@@ -3,16 +3,26 @@ package filipe.guerreiro.ui.cash.listing
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import filipe.guerreiro.domain.model.CashSession
+import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.domain.model.toUiModel
 import filipe.guerreiro.domain.repository.CashRepository
+import filipe.guerreiro.domain.repository.TransactionRepository
 import filipe.guerreiro.domain.session.SessionManager
+import filipe.guerreiro.ui.transaction.TransactionUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 data class CashListUiState(
@@ -26,11 +36,6 @@ data class CashListUiState(
 data class CashListFilters(
     val minTransactions: Int? = null,
     val maxTransactions: Int? = null,
-    // Note: Date filtering would ideally use specific types, but for simplicity we'll assume filtering logic
-    // is done via String or simpler means for now, or if needed we can parse dates.
-    // Given the context, we will filter by transaction count as requested and maybe date range if feasible.
-    // For now, let's stick to transaction count as it's easier to implement without complex date pickers first.
-    // The user asked for "intervalo de datas para abertura/fechamento" too.
     val startDate: Long? = null, // timestamp
     val endDate: Long? = null // timestamp
 ) {
@@ -46,64 +51,79 @@ data class CashSessionUi(
     val initialAmount: String = "R$ 0,00",
     val transactionCount: Int = 0,
     val isCurrent: Boolean,
-    val timestamp: Long = 0L // Added for sorting/filtering
+    val timestamp: Long = 0L,
+    val balanceValue: Long? = null
 )
 
 class CashListViewModel(
     private val cashRepository: CashRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CashListUiState(isLoading = true))
-    val uiState: StateFlow<CashListUiState> = _uiState.asStateFlow()
-
-    private var originalSessions: List<CashSessionUi> = emptyList()
-
-    init {
-        loadSessions()
-    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _filters = MutableStateFlow(CashListFilters())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun loadSessions() {
-        viewModelScope.launch {
-            try {
-                sessionManager.currentUser
-                    .filterNotNull()
-                    .flatMapLatest { user ->
-                        cashRepository.getAllSessions(user.id)
-                    }
-                    .collect { sessions ->
-                        val uiSessions = sessions.map { session -> session.toUiModel() }
-                            .sortedByDescending { it.timestamp } // Ensure most recent first
-                        
-                        originalSessions = uiSessions
-                        
-                        _uiState.update {
-                            it.copy(
-                                sessions = uiSessions,
-                                filteredSessions = applyFilters(uiSessions, it.filters),
-                                isLoading = false
-                            )
+    val uiState: StateFlow<CashListUiState> =
+        combine(
+            sessionManager.currentUser.filterNotNull().flatMapLatest { user ->
+                observeSessionsForUser(user.id)
+            },
+            _filters
+        ) { sessions, filters ->
+            CashListUiState(
+                sessions = sessions,
+                filteredSessions = applyFilters(sessions, filters),
+                isLoading = false,
+                error = null,
+                filters = filters
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = CashListUiState(isLoading = true)
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeSessionsForUser(userId: Long): Flow<List<CashSessionUi>> {
+        return cashRepository.getAllSessions(userId)
+            .flatMapLatest { sessions ->
+                if (sessions.isEmpty()) {
+                    flowOf(emptyList())
+                } else {
+                    combine(
+                        sessions.map { session ->
+                            combine(
+                                cashRepository.getSessionBalance(session.id),
+                                transactionRepository.getAllTransactions(session.id)
+                            ) { balance, transactions ->
+                                val base = session.toUiModel()
+                                base.copy(
+                                    finalBalance = balance.currentBalance.toCurrencyString(),
+                                    initialAmount = balance.initial.toCurrencyString(),
+                                    transactionCount = transactions.size,
+                                    balanceValue = balance.currentBalance
+                                )
+                            }
                         }
+                    ) { perSession ->
+                        perSession.toList()
+                    }.map { list ->
+                        list.sortedByDescending { it.timestamp }
                     }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Erro ao carregar caixas: ${e.message}"
-                    )
                 }
             }
-        }
     }
 
+
+
+
+
+
+
     fun updateFilters(newFilters: CashListFilters) {
-        _uiState.update {
-            it.copy(
-                filters = newFilters,
-                filteredSessions = applyFilters(originalSessions, newFilters)
-            )
-        }
+        _filters.value = newFilters
     }
 
     fun clearFilters() {

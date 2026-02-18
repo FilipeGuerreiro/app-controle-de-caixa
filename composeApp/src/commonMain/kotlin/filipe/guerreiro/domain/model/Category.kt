@@ -21,5 +21,6 @@ data class Category(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val userId: Long,
     val name: String,
-    val type: TransactionType
+    val type: TransactionType,
+    val isActive: Boolean = true
 )

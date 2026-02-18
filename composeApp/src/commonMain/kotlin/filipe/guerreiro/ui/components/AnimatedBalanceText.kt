@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import filipe.guerreiro.domain.model.toCurrencyString
@@ -34,12 +34,11 @@ fun AnimatedBalanceText(
         color = MaterialTheme.colorScheme.primary
     ),
     skeletonBoxWidth: Dp = 100.dp,
-    skeletonBoxHeight: Dp = 24.dp,
-    boxWidth: Dp = 120.dp
+    skeletonBoxHeight: Dp = 24.dp
 
 ) {
     Box(
-        modifier = modifier.width(boxWidth)
+        modifier = modifier
     ) {
         AnimatedContent(
             targetState = isLoading,

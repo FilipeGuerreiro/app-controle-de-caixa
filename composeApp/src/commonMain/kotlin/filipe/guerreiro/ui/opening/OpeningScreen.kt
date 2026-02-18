@@ -168,7 +168,7 @@ fun OpeningScreenContent(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Informe quanto dinheiro você tem em caixa agora para começar o expediente.",
+                        text = "Informe a quantidade inicial que seu caixa vai receber como saldo.",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 20.sp

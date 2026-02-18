@@ -26,6 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import filipe.guerreiro.ui.components.AnimatedBalanceText
+import filipe.guerreiro.ui.components.SkeletonBox
+import filipe.guerreiro.ui.components.SkeletonCircle
 import filipe.guerreiro.ui.theme.financial
 
 @Composable
@@ -41,11 +44,6 @@ fun DailySummaryCard(summary: CashSummaryUi) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "RESUMO",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
                 StatusPill(text = summary.status)
             }
 
@@ -55,14 +53,34 @@ fun DailySummaryCard(summary: CashSummaryUi) {
                 SummaryValueColumn(
                     modifier = Modifier.weight(1f),
                     label = "Saldo Inicial",
-                    value = summary.initialAmount
+                    value = summary.initialAmountValue
                 )
-                SummaryValueColumn(
+                Column(
                     modifier = Modifier.weight(1f),
-                    label = "Saldo Atual",
-                    value = summary.currentBalance,
-                    valueColor = if (summary.status == "Aberto") MaterialTheme.financial.profit else null
-                )
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = if (summary.status == "Aberto") "Saldo Atual" else "Saldo Final",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AnimatedBalanceText(
+                            isLoading = false,
+                            value = summary.currentBalanceValue,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (summary.status == "Aberto") MaterialTheme.financial.profit else MaterialTheme.colorScheme.onSurface
+                            )
+                        )
+                        Spacer(modifier = Modifier.size(6.dp))
+                        val deltaColor = if (summary.isDeltaPositive) {
+                            MaterialTheme.financial.profit
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
+                    }
+                }
             }
 
             HorizontalDivider(
@@ -71,18 +89,139 @@ fun DailySummaryCard(summary: CashSummaryUi) {
             )
 
             Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Abertura",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = summary.openingDate,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Fechamento",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = summary.closingDate ?: "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
                 MovementIndicator(
                     modifier = Modifier.weight(1f),
                     label = "Entradas",
-                    value = summary.totalInflow,
+                    value = summary.totalInflowValue,
                     isIncome = true
                 )
                 MovementIndicator(
                     modifier = Modifier.weight(1f),
                     label = "Saídas",
-                    value = summary.totalOutflow,
+                    value = summary.totalOutflowValue,
                     isIncome = false
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun DailySummaryCardSkeleton() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SkeletonBox(width = 80.dp, height = 24.dp)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    SkeletonBox(width = 100.dp, height = 14.dp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SkeletonBox(width = 120.dp, height = 24.dp)
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    SkeletonBox(width = 80.dp, height = 14.dp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SkeletonBox(width = 120.dp, height = 24.dp)
+                }
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 16.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    SkeletonBox(width = 60.dp, height = 12.dp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    SkeletonBox(width = 100.dp, height = 16.dp)
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    SkeletonBox(width = 80.dp, height = 12.dp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    SkeletonBox(width = 100.dp, height = 16.dp)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SkeletonCircle(size = 32.dp)
+                        Column {
+                            SkeletonBox(width = 80.dp, height = 12.dp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            SkeletonBox(width = 100.dp, height = 16.dp)
+                        }
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SkeletonCircle(size = 32.dp)
+                        Column {
+                            SkeletonBox(width = 80.dp, height = 12.dp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            SkeletonBox(width = 100.dp, height = 16.dp)
+                        }
+                    }
+                }
             }
         }
     }
@@ -92,7 +231,7 @@ fun DailySummaryCard(summary: CashSummaryUi) {
 private fun SummaryValueColumn(
     modifier: Modifier = Modifier,
     label: String,
-    value: String,
+    value: Long,
     valueColor: Color? = null
 ) {
     Column(modifier = modifier) {
@@ -101,10 +240,13 @@ private fun SummaryValueColumn(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            color = valueColor ?: MaterialTheme.colorScheme.onSurface
+        AnimatedBalanceText(
+            isLoading = false,
+            value = value,
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = valueColor ?: MaterialTheme.colorScheme.onSurface
+            )
         )
     }
 }
@@ -135,7 +277,7 @@ private fun StatusPill(text: String) {
 private fun MovementIndicator(
     modifier: Modifier = Modifier,
     label: String,
-    value: String,
+    value: Long,
     isIncome: Boolean
 ) {
     // Cores extraídas da sua implementação original para manter a consistência
@@ -151,7 +293,7 @@ private fun MovementIndicator(
         Surface(
             modifier = Modifier.size(32.dp),
             shape = CircleShape,
-            color = iconBackground
+            color = Color.Transparent
         ) {
             Icon(
                 imageVector = icon,
@@ -166,10 +308,13 @@ private fun MovementIndicator(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                color = accentColor
+            AnimatedBalanceText(
+                isLoading = false,
+                value = value,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = accentColor
+                )
             )
         }
     }

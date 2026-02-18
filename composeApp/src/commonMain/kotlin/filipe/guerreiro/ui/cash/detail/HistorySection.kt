@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import filipe.guerreiro.ui.components.SkeletonBox
+import filipe.guerreiro.ui.components.SkeletonCircle
 import filipe.guerreiro.ui.theme.financial
 
 @Composable
@@ -91,6 +94,49 @@ fun HistoryCard(item: HistoryItemUi) {
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = color
             )
+        }
+    }
+}
+
+@Composable
+fun HistorySectionSkeleton(
+    itemCount: Int = 3
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SkeletonBox(
+            modifier = Modifier.padding(bottom = 4.dp),
+            width = 120.dp,
+            height = 20.dp
+        )
+
+        repeat(itemCount) {
+            HistoryCardSkeleton()
+        }
+    }
+}
+
+@Composable
+fun HistoryCardSkeleton() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SkeletonCircle(size = 40.dp)
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                SkeletonBox(width = 140.dp, height = 16.dp)
+                Spacer(modifier = Modifier.height(6.dp))
+                SkeletonBox(width = 100.dp, height = 12.dp)
+            }
+
+            SkeletonBox(width = 80.dp, height = 16.dp)
         }
     }
 }

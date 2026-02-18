@@ -88,6 +88,8 @@ private fun isBottomNavTransition(
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
 ) {
     NavHost(
         navController = navController,
@@ -214,7 +216,9 @@ fun AppNavHost(
             CashDetailScreen(
                 cashId = route.cashId.toLong(),
                 onBackClick = { navController.popBackStack() },
-                onNavigateToTransaction = { navController.navigate("transaction") }
+                onNavigateToTransaction = { navController.navigate("transaction") },
+                onNavigateToCategories = { navController.navigate("categories") },
+                onNavigateToPaymentMethods = { navController.navigate("paymentMethods") }
             )
         }
 
@@ -237,7 +241,11 @@ fun AppNavHost(
             popEnterTransition = { slideInFromLeft() },
             popExitTransition = { slideOutToRight() },
         ) {
-            MenuScreen(navController)
+            MenuScreen(
+                navController = navController,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme
+            )
         }
 
         // Telas internas — Slide horizontal (push/pop)

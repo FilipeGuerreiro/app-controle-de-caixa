@@ -20,5 +20,6 @@ import androidx.room.PrimaryKey
 data class PaymentMethod(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val userId: Long,
-    val name: String
+    val name: String,
+    val isActive: Boolean = true
 )

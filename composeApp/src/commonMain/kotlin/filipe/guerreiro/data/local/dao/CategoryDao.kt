@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM categories WHERE userId = :userId")
+    @Query("SELECT * FROM categories WHERE userId = :userId AND isActive = 1")
     fun getAll(userId: Long): Flow<List<Category>>
 
-    @Query("SELECT * FROM categories WHERE name = :name AND userId = :userId LIMIT 1")
+    @Query("SELECT * FROM categories WHERE name = :name AND userId = :userId AND isActive = 1 LIMIT 1")
     suspend fun getByName(userId: Long, name: String): Category?
 
     @Insert
@@ -21,6 +21,6 @@ interface CategoryDao {
     @Query("UPDATE categories SET name = :name, type = :type WHERE id = :id")
     suspend fun update(id: Long, name: String, type: TransactionType)
 
-    @Query("DELETE FROM categories WHERE id = :id")
+    @Query("UPDATE categories SET isActive = 0 WHERE id = :id")
     suspend fun deleteById(id: Long)
 }

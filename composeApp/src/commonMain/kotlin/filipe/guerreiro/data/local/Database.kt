@@ -7,7 +7,7 @@ import kotlinx.coroutines.IO
 
 fun getDatabaseBuilder(builder: RoomDatabase.Builder<AppDatabase>): AppDatabase {
     return builder
-    .fallbackToDestructiveMigration(true)
+        .fallbackToDestructiveMigration(true) // Comentado para evitar perda acidental de dados.
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

@@ -52,6 +52,11 @@ import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
 import filipe.guerreiro.ui.theme.financial
 import org.koin.compose.viewmodel.koinViewModel
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import filipe.guerreiro.ui.home.QuickActionAmountDialog
+
 @Composable
 fun HomeScreen(
     onOpenCashClick: () -> Unit,
@@ -61,6 +66,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedQuickAction by remember { mutableStateOf<QuickActionUiModel?>(null) }
 
     // Redireciona para seleção de usuário se não estiver logado
     LaunchedEffect(uiState.isLoggedIn) {
@@ -91,7 +97,7 @@ fun HomeScreen(
             isLoading = showSkeleton,
             isCashOpen = uiState.isCashOpen,
             isFirstAccess = uiState.isFirstAccess,
-            dailyGoal = uiState.dailyGoal,
+            currentBalance = uiState.currentBalance,
             totalIncome = uiState.totalIncome,
             totalExpense = uiState.totalExpense,
             onOpenCashClick = onOpenCashClick,
@@ -110,7 +116,7 @@ fun HomeScreen(
             QuickActionSection(
                 actions = uiState.quickActions,
                 onActionClick = { action ->
-                    println("Clickou em ${action.title} - Valor: ${action.priceStr}")
+                    selectedQuickAction = action
                 }
             )
         }
@@ -130,6 +136,24 @@ fun HomeScreen(
         if (showEmptyMessageQuickAction && showEmptyMessageActivities && !uiState.isFirstAccess) {
             EmptyStateMessage()
         }
+    }
+
+    if (selectedQuickAction != null) {
+        QuickActionAmountDialog(
+            item = selectedQuickAction!!,
+            onDismiss = { selectedQuickAction = null },
+            onConfirm = { amount ->
+                viewModel.addQuickTransaction(
+                    categoryId = selectedQuickAction!!.categoryId,
+                    paymentMethodId = selectedQuickAction!!.paymentMethodId,
+                    type = selectedQuickAction!!.type,
+                    amount = amount,
+                    onSuccess = {
+                        selectedQuickAction = null
+                    }
+                )
+            }
+        )
     }
 }
 
@@ -324,7 +348,7 @@ fun CashStatusCard(
     isLoading: Boolean = false,
     isCashOpen: Boolean = false,
     isFirstAccess: Boolean = false,
-    dailyGoal: String = "",
+    currentBalance: String = "",
     totalIncome: String = "",
     totalExpense: String = "",
     onOpenCashClick: () -> Unit,
@@ -387,27 +411,29 @@ fun CashStatusCard(
                         ),
                         modifier = Modifier.weight(1f)
                     )
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = "Ir para detalhes",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Meta diária (mockada)
             if (isLoading) {
-                SkeletonBox(width = 200.dp, height = 24.dp)
+                SkeletonBox(width = 160.dp, height = 32.dp)
             } else {
-                Text(
-                    text = "Meta diária: $dailyGoal",
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                Column {
+                    Text(
+                        text = "Saldo atual",
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = currentBalance,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -564,11 +590,7 @@ fun ActivityItem(activity: RecentActivity) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                val bgColor = if (activity.isIncome) {
-                    MaterialTheme.financial.profitContainer.copy(alpha = 0.5f)
-                } else {
-                    MaterialTheme.colorScheme.errorContainer
-                }
+                val bgColor = if (activity.isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
                 val iconColor = if (activity.isIncome) {
                     MaterialTheme.financial.profit
                 } else {
@@ -577,7 +599,7 @@ fun ActivityItem(activity: RecentActivity) {
 
                 Surface(
                     shape = RoundedCornerShape(50),
-                    color = bgColor,
+                    color = bgColor.copy(alpha = 0.1f),
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(

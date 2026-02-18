@@ -5,9 +5,20 @@ import androidx.lifecycle.viewModelScope
 import filipe.guerreiro.domain.model.Category
 import filipe.guerreiro.domain.model.PaymentMethod
 import filipe.guerreiro.domain.model.TransactionType
+import filipe.guerreiro.domain.repository.CategoryRepository
+import filipe.guerreiro.domain.repository.PaymentMethodRepository
+import filipe.guerreiro.domain.repository.TransactionRepository
+import filipe.guerreiro.domain.session.SessionManager
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -19,50 +30,67 @@ data class TransactionUiState(
     val selectedPaymentMethod: PaymentMethod? = null,
     val categories: List<Category> = emptyList(),
     val paymentMethods: List<PaymentMethod> = emptyList(),
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val isSaving: Boolean = false,
+    val errorMessage: String? = null
 )
 
-class TransactionViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TransactionUiState())
-    val uiState: StateFlow<TransactionUiState> = _uiState.asStateFlow()
+data class TransactionDbState(
+    val categories: List<Category> = emptyList(),
+    val paymentMethods: List<PaymentMethod> = emptyList(),
 
-    init {
-        // Mock Data
-        val mockCategories = listOf(
-            Category(id = 1, userId = 1, name = "Vendas", type = TransactionType.INCOME),
-            Category(id = 2, userId = 1, name = "Serviços", type = TransactionType.INCOME),
-            Category(id = 3, userId = 1, name = "Aluguel", type = TransactionType.EXPENSE),
-            Category(id = 4, userId = 1, name = "Fornecedores", type = TransactionType.EXPENSE),
-            Category(id = 5, userId = 1, name = "Salários", type = TransactionType.EXPENSE),
-            Category(id = 6, userId = 1, name = "Transporte", type = TransactionType.EXPENSE)
-        )
+)
 
-        val mockPaymentMethods = listOf(
-            PaymentMethod(id = 1, userId = 1, name = "Dinheiro"),
-            PaymentMethod(id = 2, userId = 1, name = "Cartão de Crédito"),
-            PaymentMethod(id = 3, userId = 1, name = "Pix"),
-            PaymentMethod(id = 4, userId = 1, name = "Cartão de Débito")
-        )
+class TransactionViewModel(
+    private val sessionManager: SessionManager,
+    private val categoryRepository: CategoryRepository,
+    private val paymentMethodRepository: PaymentMethodRepository,
+    private val transactionRepository: TransactionRepository
+) : ViewModel() {
 
-        _uiState.update {
-            it.copy(
-                categories = mockCategories,
-                paymentMethods = mockPaymentMethods
-            )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _dataBaseFlow = sessionManager.currentUser
+        .flatMapLatest { user ->
+            if (user == null) flowOf(TransactionDbState())
+            else combine(
+                categoryRepository.getCategories(user.id),
+                paymentMethodRepository.getPaymentMethods(user.id)
+            ) {
+                categories, payments ->
+                TransactionDbState(categories = categories, paymentMethods = payments)
+            }
         }
-    }
+
+    private val _localUiState = MutableStateFlow(TransactionUiState())
+
+    val uiState: StateFlow<TransactionUiState> =
+        combine(
+            _dataBaseFlow,
+            _localUiState
+        ) { db, ui ->
+            ui.copy(
+                categories = db.categories,
+                paymentMethods = db.paymentMethods
+            )
+        }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = TransactionUiState()
+    )
+
 
     fun onAmountChange(newAmount: Long) {
-        _uiState.update { it.copy(amountInCents = newAmount) }
+        _localUiState.update { it.copy(amountInCents = newAmount) }
     }
 
     fun onDescriptionChange(newDescription: String) {
-        _uiState.update { it.copy(description = newDescription) }
+        _localUiState.update { it.copy(description = newDescription) }
     }
 
     fun onTypeChange(newType: TransactionType) {
-        _uiState.update {
+        _localUiState.update {
             it.copy(
                 type = newType,
                 selectedCategory = null // Reset category when type changes
@@ -71,21 +99,71 @@ class TransactionViewModel : ViewModel() {
     }
 
     fun onCategorySelected(category: Category) {
-        _uiState.update { it.copy(selectedCategory = category) }
+        _localUiState.update { it.copy(selectedCategory = category) }
     }
 
     fun onPaymentMethodSelected(paymentMethod: PaymentMethod) {
-        _uiState.update { it.copy(selectedPaymentMethod = paymentMethod) }
+        _localUiState.update { it.copy(selectedPaymentMethod = paymentMethod) }
     }
 
     fun saveTransaction() {
-        // Simulate saving
+        val currentState = _localUiState.value
+        val category = currentState.selectedCategory
+        val paymentMethod = currentState.selectedPaymentMethod
+
+        val validationError = when {
+            currentState.amountInCents <= 0L -> "Informe um valor maior que zero"
+            category == null -> "Selecione uma categoria"
+            paymentMethod == null -> "Selecione um método de pagamento"
+            else -> null
+        }
+
+        if (validationError != null) {
+            _localUiState.update { it.copy(errorMessage = validationError) }
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaved = true) }
+            _localUiState.update { it.copy(isSaving = true, errorMessage = null) }
+            try {
+                val user = sessionManager.currentUser.value
+                if (user == null) {
+                    _localUiState.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = "Nenhum usuário logado."
+                        )
+                    }
+                    return@launch
+                }
+
+                transactionRepository.addTransactionForUserCurrentSession(
+                    userId = user.id,
+                    categoryId = category!!.id,
+                    paymentMethodId = paymentMethod!!.id,
+                    amount = currentState.amountInCents,
+                    description = currentState.description,
+                    type = currentState.type
+                )
+
+                _localUiState.update {
+                    it.copy(
+                        isSaving = false,
+                        isSaved = true
+                    )
+                }
+            } catch (e: Exception) {
+                _localUiState.update {
+                    it.copy(
+                        isSaving = false,
+                        errorMessage = e.message ?: "Erro ao salvar lançamento"
+                    )
+                }
+            }
         }
     }
     
     fun resetSaveState() {
-        _uiState.update { it.copy(isSaved = false) }
+        _localUiState.update { it.copy(isSaved = false) }
     }
 }

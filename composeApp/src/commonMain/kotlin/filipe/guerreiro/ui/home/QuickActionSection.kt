@@ -2,11 +2,9 @@ package filipe.guerreiro.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,23 +26,37 @@ fun QuickActionSection(
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            // O LazyGrid precisa de altura definida se estiver dentro de um Column rolável.
-            // Para 4 itens (2 linhas), ~180dp funciona. Para 6 itens, aumente.
-            // Uma alternativa melhor em telas reais é não usar LazyGrid dentro de Column rolável,
-            // mas para este mock vamos fixar a altura.
-            modifier = Modifier.height(180.dp),
-            userScrollEnabled = false // Desabilita a rolagem interna do grid
+        // Assuming max 4 items for quick actions as per requirement
+        val chunkedActions = actions.take(4).chunked(2)
+        
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(actions) { action ->
-                QuickActionCard(
-                    item = action,
-                    onClick = { onActionClick(action) }
-                )
+            chunkedActions.forEach { rowItems ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    rowItems.forEach { action ->
+                        QuickActionCard(
+                            item = action,
+                            onClick = { onActionClick(action) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    // If row has only 1 item, add spacer to keep alignment if needed, 
+                    // but weight(1f) on single item would stretch it. 
+                    // If we want equal width columns, we need a placeholder.
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+fun Spacer(modifier: Modifier) {
+    androidx.compose.foundation.layout.Spacer(modifier = modifier)
 }

@@ -78,12 +78,13 @@ import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
 import filipe.guerreiro.ui.theme.financial
 
 import filipe.guerreiro.ui.components.CurrencyAmountInput
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun TransactionScreen(
     onBackClick: () -> Unit,
     onTransactionSaved: () -> Unit,
-    viewModel: TransactionViewModel = viewModel { TransactionViewModel() }
+    viewModel: TransactionViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -132,7 +133,7 @@ fun TransactionContent(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = Color.Unspecified,
                     navigationIconContentColor = Color.Unspecified,

@@ -4,23 +4,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import filipe.guerreiro.domain.repository.CashRepository
 import filipe.guerreiro.domain.session.SessionManager
+import filipe.guerreiro.domain.repository.TransactionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ClosingViewModel(
     private val repository: CashRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
     private val isLoadingState = MutableStateFlow(false)
@@ -37,13 +36,17 @@ class ClosingViewModel(
                 .flatMapLatest { session ->
                     if (session == null) return@flatMapLatest flowOf(ClosingDataState())
 
-                    repository.getSessionBalance(session.id).map {
-                        balance ->
+                    combine(
+                        repository.getSessionBalance(session.id),
+                        transactionRepository.getAllTransactions(session.id)
+                    ) { balance, transactions ->
                         ClosingDataState(
                             initialBalance = balance.initial,
                             finalBalance = balance.currentBalance,
                             incomeBalance = balance.totalIncomes,
-                            expenseBalance = balance.totalExpenses
+                            expenseBalance = balance.totalExpenses,
+                            transactionCount = transactions.size,
+                            openingTimestamp = session.openingTimeStamp.toEpochMilliseconds()
                         )
                     }
                 }

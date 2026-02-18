@@ -1,8 +1,5 @@
 package filipe.guerreiro.ui.home
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,22 +9,20 @@ import filipe.guerreiro.domain.model.User
 import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.domain.model.toRecentActivity
 import filipe.guerreiro.domain.repository.CashRepository
+import filipe.guerreiro.domain.repository.TransactionRepository
 import filipe.guerreiro.domain.session.SessionManager
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+
+import filipe.guerreiro.domain.repository.CategoryRepository
+import filipe.guerreiro.domain.repository.PaymentMethodRepository
 
 data class RecentActivity(
     val id: String,
@@ -40,10 +35,11 @@ data class RecentActivity(
 )
 
 data class QuickActionUiModel(
-    val id: Long,
-    val emoji: String,
-    val title: String,
-    val priceStr: String
+    val categoryId: Long,
+    val paymentMethodId: Long,
+    val type: TransactionType,
+    val categoryName: String,
+    val paymentMethodName: String
 )
 
 data class HomeUiState(
@@ -59,12 +55,17 @@ data class HomeUiState(
     val dailyProgress: Int = 0,
     val totalIncome: String = "",
     val totalExpense: String = "",
-    val currentCashId: Long? = null
+    val currentBalance: String = "R$ 0,00",
+    val currentCashId: Long? = null,
+    val quickActionError: String? = null
 )
 
 class HomeViewModel(
     private val sessionManager: SessionManager,
-    private val cashRepository: CashRepository
+    private val cashRepository: CashRepository,
+    private val transactionRepository: TransactionRepository,
+    private val categoryRepository: CategoryRepository,
+    private val paymentMethodRepository: PaymentMethodRepository
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -88,7 +89,32 @@ class HomeViewModel(
             initialValue = HomeUiState(isLoading = true)
         )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeCashForUser(user: User): Flow<HomeUiState> {
+        val categoriesFlow = categoryRepository.getCategories(user.id)
+        val paymentMethodsFlow = paymentMethodRepository.getPaymentMethods(user.id)
+
+        val quickActionsFlow = combine(
+            transactionRepository.getTopFrequentTransactions(user.id),
+            categoriesFlow,
+            paymentMethodsFlow
+        ) { frequentTxs, categories, paymentMethods ->
+            frequentTxs.mapNotNull { tx ->
+                val category = categories.find { it.id == tx.categoryId }
+                val paymentMethod = paymentMethods.find { it.id == tx.paymentMethodId }
+
+                if (category != null && paymentMethod != null) {
+                    QuickActionUiModel(
+                        categoryId = tx.categoryId,
+                        paymentMethodId = tx.paymentMethodId,
+                        type = tx.type,
+                        categoryName = category.name,
+                        paymentMethodName = paymentMethod.name
+                    )
+                } else null
+            }
+        }
+
         return cashRepository
             .getCurrentCashSession(user.id)
             .flatMapLatest { cashSession ->
@@ -103,6 +129,7 @@ class HomeViewModel(
                             businessName = user.businessName,
                             totalIncome = 0L.toCurrencyString(),
                             totalExpense = 0L.toCurrencyString(),
+                            currentBalance = 0L.toCurrencyString(),
                             recentActivities = emptyList(),
                             quickActions = emptyList()
                         )
@@ -110,9 +137,11 @@ class HomeViewModel(
                 } else {
                     combine(
                         cashRepository.getSessionBalance(cashSession.id),
-                        cashRepository.getRecentTransactions(cashSession.id, 5)
-                    ) {
-                        balance, transactions ->
+                        transactionRepository.getRecentTransactions(cashSession.id, 5),
+                        quickActionsFlow,
+                        categoriesFlow,
+                        paymentMethodsFlow
+                    ) { balance, transactions, quickActions, categories, paymentMethods ->
                         HomeUiState(
                             isLoading = false,
                             isLoggedIn = true,
@@ -122,10 +151,23 @@ class HomeViewModel(
                             businessName = user.businessName,
                             totalIncome = balance.totalIncomes.toCurrencyString(),
                             totalExpense = balance.totalExpenses.toCurrencyString(),
+                            currentBalance = balance.currentBalance.toCurrencyString(),
                             recentActivities = transactions.map { tx ->
-                                tx.toRecentActivity()
+                                val base = tx.toRecentActivity()
+                                val category = categories.find { it.id == tx.categoryId }
+                                val paymentMethod = paymentMethods.find { it.id == tx.paymentMethodId }
+
+                                val title = when {
+                                    category != null && paymentMethod != null ->
+                                        "${category.name} • ${paymentMethod.name}"
+                                    category != null -> category.name
+                                    paymentMethod != null -> paymentMethod.name
+                                    else -> base.title
+                                }
+
+                                base.copy(title = title)
                             },
-                            quickActions = emptyList(),
+                            quickActions = quickActions,
                             currentCashId = cashSession.id
                         )
                     }
@@ -133,6 +175,30 @@ class HomeViewModel(
             }
     }
 
+    fun addQuickTransaction(
+        categoryId: Long,
+        paymentMethodId: Long,
+        type: TransactionType,
+        amount: Long,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            val user = sessionManager.currentUser.value ?: return@launch
+            try {
+                transactionRepository.addTransactionForUserCurrentSession(
+                    userId = user.id,
+                    categoryId = categoryId,
+                    paymentMethodId = paymentMethodId,
+                    amount = amount,
+                    description = "Lançamento Rápido",
+                    type = type
+                )
+                onSuccess()
+            } catch (e: Exception) {
+                // Handle error? uiState could have error field
+            }
+        }
+    }
 
     fun logout() {
         viewModelScope.launch {

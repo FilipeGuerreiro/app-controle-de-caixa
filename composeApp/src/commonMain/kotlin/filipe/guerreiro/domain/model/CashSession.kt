@@ -35,7 +35,7 @@ enum class CashStatusType { OPEN, CLOSED }
 
 fun CashSession.toUiModel(): CashSessionUi {
     val date = openingTimeStamp.toLocalDateTime(TimeZone.currentSystemDefault())
-    val formattedDate = "${date.dayOfMonth}/${date.monthNumber}/${date.year}"
+    val formattedDate = "${date.day}/${date.month.number}/${date.year}"
 
     return CashSessionUi(
         id = id,

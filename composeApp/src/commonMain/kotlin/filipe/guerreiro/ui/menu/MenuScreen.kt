@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,8 @@ import org.koin.compose.koinInject
 @Composable
 fun MenuScreen(
     navController: NavController,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     sessionManager: SessionManager = koinInject()
 ) {
     val scope = rememberCoroutineScope()
@@ -48,10 +51,16 @@ fun MenuScreen(
         )
 
         // Galeria de cores
+//        MenuItem(
+//            icon = Icons.Default.Palette,
+//            text = "Galeria de cores",
+//            onClick = { navController.navigate("colorGallery") }
+//        )
+
         MenuItem(
-            icon = Icons.Default.Palette,
-            text = "Galeria de cores",
-            onClick = { navController.navigate("colorGallery") }
+            icon = Icons.Default.DarkMode,
+            text = if (isDarkTheme) "Usar tema claro" else "Usar tema escuro",
+            onClick = onToggleTheme
         )
 
         // Métodos de Pagamento

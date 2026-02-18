@@ -1,7 +1,5 @@
 package filipe.guerreiro.ui.closing
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,9 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -50,13 +46,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.ui.components.AnimatedBalanceText
-import filipe.guerreiro.ui.components.SkeletonBox
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
 import filipe.guerreiro.ui.theme.financial
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +109,7 @@ fun ClosingScreen(
             ClosingSummaryCard(state)
 
             // Card de Detalhamento
-            ClosingDetailsCard()
+            ClosingDetailsCard(state)
 
             state.errorMessage?.let { error ->
                 Card(
@@ -335,7 +332,7 @@ fun FlowItem(
 }
 
 @Composable
-fun ClosingDetailsCard() {
+fun ClosingDetailsCard(state: ClosingUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -356,9 +353,23 @@ fun ClosingDetailsCard() {
                 )
             )
             
-            DetailRow(label = "Transações Realizadas", value = "12")
-            DetailRow(label = "Duração do Caixa", value = "6h 30min")
-            DetailRow(label = "Data de Abertura", value = "11/02/2026 - 08:00")
+            val openingTs = state.closingData.openingTimestamp
+            val openingLocal = if (openingTs != null) Instant.fromEpochMilliseconds(openingTs).toLocalDateTime(TimeZone.currentSystemDefault()) else null
+            val openingText = openingLocal?.let {
+                val hh = it.hour.toString().padStart(2, '0')
+                val mm = it.minute.toString().padStart(2, '0')
+                "${it.day}/${it.month.number}/${it.year} - $hh:$mm"
+            } ?: "-"
+            val durationText = openingTs?.let {
+                val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                val delta = now - it
+                val hours = (delta / 3_600_000).toInt()
+                val minutes = ((delta % 3_600_000) / 60_000).toInt()
+                "${hours}h ${minutes}min"
+            } ?: "-"
+            DetailRow(label = "Transações Realizadas", value = state.closingData.transactionCount.toString())
+            DetailRow(label = "Duração do Caixa", value = durationText)
+            DetailRow(label = "Data de Abertura", value = openingText)
         }
     }
 }

@@ -25,8 +25,8 @@ import filipe.guerreiro.domain.model.User
         PaymentMethod::class,
         User::class
                ],
-    version = 3,
-    exportSchema = false
+    version = 4,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)

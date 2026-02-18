@@ -30,4 +30,13 @@ interface TransactionDao {
     @Query("SELECT SUM(amount) FROM transactions WHERE sessionId = :sessionId AND type = 'EXPENSE'")
     fun getExpenseSum(sessionId: Long): Flow<Long?>
 
+    @Query("""
+        SELECT t.* FROM transactions t
+        INNER JOIN cash_sessions s ON t.sessionId = s.id
+        WHERE s.userId = :userId
+        GROUP BY t.categoryId, t.paymentMethodId, t.type
+        ORDER BY COUNT(*) DESC
+        LIMIT 4
+    """)
+    fun getTopFrequentTransactions(userId: Long): Flow<List<Transaction>>
 }

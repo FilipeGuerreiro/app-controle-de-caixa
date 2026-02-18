@@ -2,7 +2,6 @@ package filipe.guerreiro.ui.cash.listing
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,15 +43,6 @@ fun CashSessionListItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        },
-        trailingContent = {
-            Text(
-                text = session.finalBalance ?: "---",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            )
         },
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.surface

@@ -113,17 +113,11 @@ fun CashListScreen(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            // Most Recent Session (Prominent Card)
-                            // We only show the prominent card if no filters are active, 
-                            // or if the filtered list contains the very first item and filters are active (logic choice).
-                            // But usually, "Prominent" implies the current context. 
-                            // If filters are active, maybe just a list is better?
-                            // Let's stick to: First item is prominent if it matches the filter.
-                            
+
                             val firstSession = state.filteredSessions.first()
                             item {
                                 Text(
-                                    text = "Caixa Atual / Recente",
+                                    text = "Caixa Atual",
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     modifier = Modifier.padding(bottom = 8.dp)
                                 )

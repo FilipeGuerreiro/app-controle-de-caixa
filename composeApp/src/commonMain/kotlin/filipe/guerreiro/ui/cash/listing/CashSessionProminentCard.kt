@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import filipe.guerreiro.ui.components.AnimatedBalanceText
 import filipe.guerreiro.ui.theme.financial
 
 @Composable
@@ -50,7 +51,6 @@ fun CashSessionProminentCard(
         Column(
             modifier = Modifier.padding(20.dp)
         ) {
-            // Header: Status Badge and Date
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -76,22 +76,23 @@ fun CashSessionProminentCard(
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Balance Section
             Text(
                 text = if (isOpen) "Saldo Atual" else "Saldo Final",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
             
-            Text(
-                text = session.finalBalance ?: session.initialAmount,
-                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+            AnimatedBalanceText(
+                isLoading = false,
+                value = session.balanceValue,
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Footer Stats
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
