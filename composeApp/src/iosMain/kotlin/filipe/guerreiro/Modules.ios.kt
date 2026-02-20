@@ -28,7 +28,7 @@ val iosDatabaseModule = module {
         val path = documentDirectory?.path + "/caixa_flavia.db"
         Room.databaseBuilder<AppDatabase>(
             name = path,
-//            factory = { AppDatabase::class.instantiateImpl() }
+            factory = { AppDatabase::class.instantiateImpl() }
         )
     }
 }
