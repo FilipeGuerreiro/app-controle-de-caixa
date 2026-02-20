@@ -8,6 +8,7 @@ import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.di.appModule
 import filipe.guerreiro.session.IosSessionPreferences
+import filipe.guerreiro.data.local.AppDatabaseConstructor
 import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
@@ -28,7 +29,7 @@ val iosDatabaseModule = module {
         val path = documentDirectory?.path + "/caixa_flavia.db"
         Room.databaseBuilder<AppDatabase>(
             name = path,
-            factory = { AppDatabase::class.instantiateImpl() }
+            factory = { AppDatabaseConstructor.initialize() }
         )
     }
 }
