@@ -116,6 +116,7 @@ dependencies {
     add("kspIosArm64", libs.room.compiler)
     add("kspIosSimulatorArm64", libs.room.compiler)
     add("kspJvm", libs.room.compiler)
+    add("kspCommonMainMetadata", libs.room.compiler)
 }
 
 compose.desktop {
