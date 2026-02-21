@@ -40,5 +40,5 @@ interface CashDao {
     fun getSessionCount(userId: Long): Flow<Int>
 
     @Query("UPDATE cash_sessions SET status = :status, closingTimeStamp = :closingTime WHERE id = :sessionId")
-    suspend fun closeSession(sessionId: Long, status: CashStatusType = CashStatusType.CLOSED, closingTime: Instant)
+    suspend fun closeSession(sessionId: Long, status: CashStatusType, closingTime: Instant)
 }

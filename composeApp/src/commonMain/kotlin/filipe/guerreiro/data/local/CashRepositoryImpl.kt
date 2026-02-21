@@ -101,7 +101,7 @@ class CashRepositoryImpl(
             }
 
             val closingTime = Clock.System.now()
-            cashDao.closeSession(activeSession.id, closingTime = closingTime)
+            cashDao.closeSession(activeSession.id, status = CashStatusType.CLOSED, closingTime = closingTime)
         }
     }
 }
