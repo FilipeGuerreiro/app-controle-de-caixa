@@ -1,11 +1,13 @@
 package filipe.guerreiro.ui.register
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,15 +22,22 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -88,6 +97,11 @@ fun RegisterScreenContent(
             modifier = modifier
                 .padding(padding)
                 .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
                 .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -108,9 +122,21 @@ fun RegisterScreenContent(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    var nameFieldValue by remember {
+                        mutableStateOf(TextFieldValue(text = state.name, selection = TextRange(state.name.length)))
+                    }
+                    LaunchedEffect(state.name) {
+                        if (state.name != nameFieldValue.text) {
+                            nameFieldValue = TextFieldValue(text = state.name, selection = TextRange(state.name.length))
+                        }
+                    }
+
                     OutlinedTextField(
-                        value = state.name,
-                        onValueChange = onNameChange,
+                        value = nameFieldValue,
+                        onValueChange = { 
+                            nameFieldValue = it
+                            onNameChange(it.text)
+                        },
                         label = { Text("Seu nome") },
                         placeholder = { Text("Ex.: Flávia Oliveira") },
                         singleLine = true,
@@ -132,9 +158,21 @@ fun RegisterScreenContent(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    var businessFieldValue by remember {
+                        mutableStateOf(TextFieldValue(text = state.businessName, selection = TextRange(state.businessName.length)))
+                    }
+                    LaunchedEffect(state.businessName) {
+                        if (state.businessName != businessFieldValue.text) {
+                            businessFieldValue = TextFieldValue(text = state.businessName, selection = TextRange(state.businessName.length))
+                        }
+                    }
+
                     OutlinedTextField(
-                        value = state.businessName,
-                        onValueChange = onBusinessNameChange,
+                        value = businessFieldValue,
+                        onValueChange = { 
+                            businessFieldValue = it
+                            onBusinessNameChange(it.text)
+                        },
                         label = { Text("Nome do negócio") },
                         placeholder = { Text("Ex.: Loja Espetinhos") },
                         singleLine = true,
@@ -182,7 +220,10 @@ fun RegisterScreenContent(
                 onClick = onSubmit,
                 enabled = canSubmit,
                 shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .height(52.dp)
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
