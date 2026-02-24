@@ -3,13 +3,9 @@ package filipe.guerreiro.ui.transaction
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,14 +27,10 @@ import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -66,7 +57,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -74,9 +64,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import filipe.guerreiro.domain.model.Category
 import filipe.guerreiro.domain.model.PaymentMethod
 import filipe.guerreiro.domain.model.TransactionType
@@ -197,6 +185,14 @@ fun TransactionContent(
                     textColor = amountColor,
                     modifier = Modifier.padding(top = 8.dp)
                 )
+                if (state.showValidationErrors && state.amountInCents <= 0L) {
+                    Text(
+                        text = "Valor deve ser maior que zero.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -208,7 +204,7 @@ fun TransactionContent(
                 TransactionTextField(
                     value = state.description,
                     onValueChange = onDescriptionChange,
-                    label = "Descrição",
+                    label = "Descrição (Opcional)",
                     icon = Icons.AutoMirrored.Filled.Notes,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
@@ -218,23 +214,29 @@ fun TransactionContent(
 
                 // Category Selection
                 val filteredCategories = state.categories.filter { it.type == state.type }
+                val isCategoryError = state.showValidationErrors && state.selectedCategory == null
                 DropdownSelector(
-                    label = "Categoria",
+                    label = "Categoria *",
                     icon = Icons.Default.Category,
                     options = filteredCategories,
                     selectedOption = state.selectedCategory,
                     onOptionSelected = onCategorySelected,
-                    itemLabel = { it.name }
+                    itemLabel = { it.name },
+                    isError = isCategoryError,
+                    supportingText = if (isCategoryError) "Selecione uma categoria" else null
                 )
 
                 // Payment Method Selection
+                val isPaymentError = state.showValidationErrors && state.selectedPaymentMethod == null
                 DropdownSelector(
-                    label = "Método de Pagamento",
+                    label = "Método de Pagamento *",
                     icon = Icons.Default.CreditCard,
                     options = state.paymentMethods,
                     selectedOption = state.selectedPaymentMethod,
                     onOptionSelected = onPaymentMethodSelected,
-                    itemLabel = { it.name }
+                    itemLabel = { it.name },
+                    isError = isPaymentError,
+                    supportingText = if (isPaymentError) "Selecione um método de pagamento" else null
                 )
             }
 
@@ -427,40 +429,54 @@ fun <T> DropdownSelector(
     options: List<T>,
     selectedOption: T?,
     onOptionSelected: (T) -> Unit,
-    itemLabel: (T) -> String
+    itemLabel: (T) -> String,
+    isError: Boolean = false,
+    supportingText: String? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = selectedOption?.let { itemLabel(it) } ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            leadingIcon = { Icon(icon, contentDescription = null) },
-            trailingIcon = {
-                Icon(
-                    Icons.Default.ArrowDropDown, 
-                    null,
-                    modifier = Modifier.clickable { expanded = !expanded } // Handle click on icon too
-                        .rotate(rotationState)
+        Column {
+            OutlinedTextField(
+                value = selectedOption?.let { itemLabel(it) } ?: "",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(label) },
+                leadingIcon = { Icon(icon, contentDescription = null) },
+                trailingIcon = {
+                    Icon(
+                        Icons.Default.ArrowDropDown, 
+                        null,
+                        modifier = Modifier.clickable { expanded = !expanded } // Handle click on icon too
+                            .rotate(rotationState)
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                enabled = false,
+                isError = isError,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                    disabledLeadingIconColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledLabelColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledContainerColor = Color.Transparent
                 )
-            },
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            enabled = false, 
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledContainerColor = Color.Transparent
             )
-        )
+            
+            if (isError && supportingText != null) {
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
+        }
         
         // Transparent overlay to capture clicks
         Box(

@@ -24,6 +24,7 @@ import filipe.guerreiro.ui.closing.ClosingViewModel
 import filipe.guerreiro.ui.home.HomeViewModel
 import filipe.guerreiro.ui.navigation.NavigationViewModel
 import filipe.guerreiro.ui.opening.OpeningViewModel
+import filipe.guerreiro.ui.onboarding.OnboardingViewModel
 import filipe.guerreiro.ui.paymentmethod.PaymentMethodViewModel
 import filipe.guerreiro.ui.register.RegisterViewModel
 import filipe.guerreiro.ui.transaction.TransactionViewModel
@@ -81,7 +82,7 @@ val appModule = module {
     }
 
     viewModel {
-        OpeningViewModel(get(), get())
+        OpeningViewModel(get(), get(), get())
     }
 
     viewModel {
@@ -102,5 +103,9 @@ val appModule = module {
 
     viewModel {
         TransactionViewModel(get(), get(), get(), get())
+    }
+
+    viewModel {
+        OnboardingViewModel(get(), get(), get())
     }
 }

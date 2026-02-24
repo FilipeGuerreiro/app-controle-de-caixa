@@ -5,14 +5,12 @@ import filipe.guerreiro.data.local.dao.TransactionDao
 import filipe.guerreiro.domain.model.CashSession
 import filipe.guerreiro.domain.model.CashStatusType
 import filipe.guerreiro.domain.model.SessionBalance
-import filipe.guerreiro.domain.model.Transaction
 import filipe.guerreiro.domain.repository.CashRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -73,8 +71,8 @@ class CashRepositoryImpl(
         }
     }
 
-    override suspend fun createSession(initialAmount: Long, userId: Long) {
-        withContext(Dispatchers.IO) {
+    override suspend fun createSession(initialAmount: Long, userId: Long, dailyGoalAmount: Long?): Long {
+        return withContext(Dispatchers.IO) {
             val activeSession = cashDao.getCurrentCashSession(userId).first()
 
             if (activeSession != null && activeSession.status == CashStatusType.OPEN) {
@@ -85,6 +83,7 @@ class CashRepositoryImpl(
                 userId = userId,
                 openingTimeStamp = Clock.System.now(),
                 initialAmount = initialAmount,
+                dailyGoalAmount = dailyGoalAmount,
                 status = CashStatusType.OPEN
             )
 
@@ -102,6 +101,12 @@ class CashRepositoryImpl(
 
             val closingTime = Clock.System.now()
             cashDao.closeSession(activeSession.id, status = CashStatusType.CLOSED, closingTime = closingTime)
+        }
+    }
+
+    override suspend fun updateDailyGoal(sessionId: Long, dailyGoalAmount: Long?) {
+        withContext(Dispatchers.IO) {
+            cashDao.updateDailyGoal(sessionId, dailyGoalAmount)
         }
     }
 }

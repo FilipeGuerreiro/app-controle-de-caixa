@@ -12,7 +12,8 @@ interface CashRepository {
     fun getAllSessions(userId: Long): Flow<List<CashSession>>
     fun getSessionById(sessionId: Long): Flow<CashSession?>
     suspend fun getSuggestedInitialAmount(userId: Long): Long
-    suspend fun createSession(initialAmount: Long, userId: Long)
+    suspend fun createSession(initialAmount: Long, userId: Long, dailyGoalAmount: Long? = null): Long
     suspend fun closeSession(userId: Long)
+    suspend fun updateDailyGoal(sessionId: Long, dailyGoalAmount: Long?)
 
 }

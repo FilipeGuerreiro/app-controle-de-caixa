@@ -2,7 +2,6 @@ package filipe.guerreiro.ui.cash.listing
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,10 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import filipe.guerreiro.ui.components.AnimatedBalanceText
+import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.ui.theme.financial
 
 @Composable
@@ -42,14 +41,14 @@ fun CashSessionProminentCard(
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier.padding(24.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -63,13 +62,13 @@ fun CashSessionProminentCard(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.size(6.dp))
                     Text(
                         text = session.date,
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -79,28 +78,36 @@ fun CashSessionProminentCard(
             Text(
                 text = if (isOpen) "Saldo Atual" else "Saldo Final",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
-            AnimatedBalanceText(
-                isLoading = false,
-                value = session.balanceValue,
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
+
+            Row {
+                if (session.balanceValue != null) {
+                    Text(
+                        text = session.balanceValue.toCurrencyString(),
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(10.dp).height(4.dp))
+                    filipe.guerreiro.ui.components.BalanceDeltaIndicator(
+                        currentBalance = session.balanceValue,
+                        initialBalance = session.initialAmountValue
+                    )
+                }
+
+            }
+            Spacer(modifier = Modifier.height(28.dp))
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(16.dp)
                     )
-                    .padding(12.dp),
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 StatItem(
@@ -118,8 +125,9 @@ fun CashSessionProminentCard(
 
 @Composable
 private fun StatusBadge(isOpen: Boolean) {
-    val backgroundColor = if (isOpen) MaterialTheme.financial.profitContainer else MaterialTheme.colorScheme.errorContainer
-    val contentColor = if (isOpen) MaterialTheme.financial.onProfitContainer else MaterialTheme.colorScheme.onErrorContainer
+    // Usando as mesmas lógicas de pílula modernas das outras telas
+    val backgroundColor = if (isOpen) MaterialTheme.financial.profitContainer else MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = if (isOpen) MaterialTheme.financial.profit else MaterialTheme.colorScheme.onSurfaceVariant
     val icon = if (isOpen) Icons.Default.LockOpen else Icons.Default.Lock
     val text = if (isOpen) "Aberto" else "Fechado"
 
@@ -154,12 +162,13 @@ private fun StatItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

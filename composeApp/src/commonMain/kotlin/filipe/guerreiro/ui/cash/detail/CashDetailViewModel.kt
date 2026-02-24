@@ -10,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.Flag
 import kotlinx.datetime.number
 import filipe.guerreiro.domain.repository.CashRepository
 import filipe.guerreiro.domain.repository.TransactionRepository
@@ -19,11 +20,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 
 data class CashDetailUiState(
     val session: CashSessionUi? = null,
     val summary: CashSummaryUi = CashSummaryUi(),
     val historyItems: List<HistoryItemUi> = emptyList(),
+    val categoryBalances: List<BreakdownItemUi> = emptyList(),
+    val paymentMethodBalances: List<BreakdownItemUi> = emptyList(),
+    val goals: List<GoalUi> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -40,7 +47,9 @@ data class CashSummaryUi(
     val initialAmountValue: Long = 0L,
     val currentBalanceValue: Long = 0L,
     val totalInflowValue: Long = 0L,
-    val totalOutflowValue: Long = 0L
+    val totalOutflowValue: Long = 0L,
+    val dailyGoalAmount: Long? = null,
+    val isLatestSession: Boolean = false
 )
 
 data class HistoryItemUi(
@@ -51,6 +60,14 @@ data class HistoryItemUi(
     val amountLabel: String,
     val isIncome: Boolean,
     val icon: ImageVector
+)
+
+data class BreakdownItemUi(
+    val name: String,
+    val amountFormatted: String,
+    val amountValue: Long,
+    val isIncome: Boolean,
+    val progress: Float
 )
 
 class CashDetailViewModel(
@@ -68,18 +85,21 @@ class CashDetailViewModel(
         loadSessionData()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadSessionData() {
         viewModelScope.launch {
-            cashRepository.getSessionById(cashId).collect { session ->
-                if (session == null) {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                } else {
-                    combine(
+            cashRepository.getSessionById(cashId)
+                .flatMapLatest { session ->
+                    if (session == null) {
+                        flowOf(_uiState.value.copy(isLoading = false))
+                    } else {
+                        combine(
                         transactionRepository.getAllTransactions(cashId),
                         cashRepository.getSessionBalance(cashId),
                         categoryRepository.getCategories(session.userId),
-                        paymentMethodRepository.getPaymentMethods(session.userId)
-                    ) { transactions, balance, categories, paymentMethods ->
+                        paymentMethodRepository.getPaymentMethods(session.userId),
+                        cashRepository.getCurrentCashSession(session.userId)
+                    ) { transactions, balance, categories, paymentMethods, latestSession ->
                         val items = transactions.map { tx ->
                             val category = categories.find { it.id == tx.categoryId }
                             val paymentMethod = paymentMethods.find { it.id == tx.paymentMethodId }
@@ -100,17 +120,125 @@ class CashDetailViewModel(
                             )
                         }
 
-                        CashDetailUiState(
-                            session = session.toUiModel(),
-                            summary = balance.toSummaryUi(session.status, session.openingTimeStamp, session.closingTimeStamp),
-                            historyItems = items,
-                            isLoading = false
-                        )
-                    }.collect { newState ->
-                        _uiState.value = newState
+                            // Mocked data for Category Balances
+                            val mockCategoryBalances = listOf(
+                                BreakdownItemUi(
+                                    name = "Refrigerante",
+                                    amountFormatted = "R$ 200,00",
+                                    amountValue = 20000,
+                                    isIncome = true,
+                                    progress = 0.66f
+                                ),
+                                BreakdownItemUi(
+                                    name = "Espetinho",
+                                    amountFormatted = "R$ 100,00",
+                                    amountValue = 10000,
+                                    isIncome = true,
+                                    progress = 0.33f
+                                ),
+                                BreakdownItemUi(
+                                    name = "Carvão",
+                                    amountFormatted = "R$ 50,00",
+                                    amountValue = 5000,
+                                    isIncome = false,
+                                    progress = 0.33f
+                                ),
+                                BreakdownItemUi(
+                                    name = "Bebidas (Fornecedor)",
+                                    amountFormatted = "R$ 100,00",
+                                    amountValue = 10000,
+                                    isIncome = false,
+                                    progress = 0.66f
+                                )
+                            )
+
+                            // Mocked data for Payment Method Balances
+                            val mockPaymentMethodBalances = listOf(
+                                BreakdownItemUi(
+                                    name = "Dinheiro",
+                                    amountFormatted = "R$ 150,00",
+                                    amountValue = 15000,
+                                    isIncome = true,
+                                    progress = 0.50f
+                                ),
+                                BreakdownItemUi(
+                                    name = "PIX",
+                                    amountFormatted = "R$ 100,00",
+                                    amountValue = 10000,
+                                    isIncome = true,
+                                    progress = 0.33f
+                                ),
+                                BreakdownItemUi(
+                                    name = "Cartão de Crédito",
+                                    amountFormatted = "R$ 50,00",
+                                    amountValue = 5000,
+                                    isIncome = true,
+                                    progress = 0.17f
+                                ),
+                                BreakdownItemUi(
+                                    name = "Dinheiro",
+                                    amountFormatted = "R$ 100,00",
+                                    amountValue = 10000,
+                                    isIncome = false,
+                                    progress = 0.66f
+                                ),
+                                BreakdownItemUi(
+                                    name = "PIX",
+                                    amountFormatted = "R$ 50,00",
+                                    amountValue = 5000,
+                                    isIncome = false,
+                                    progress = 0.33f
+                                )
+                            )
+
+                            val summaryUi = balance.toSummaryUi(session.status, session.openingTimeStamp, session.closingTimeStamp).copy(
+                                dailyGoalAmount = session.dailyGoalAmount,
+                                isLatestSession = latestSession?.id == session.id
+                            )
+
+                            // Populate Goals list dynamically
+                            val dynamicGoals = mutableListOf<GoalUi>()
+                            if (session.dailyGoalAmount != null && session.dailyGoalAmount > 0) {
+                                val currentInflow = summaryUi.totalInflowValue
+                                // progress formula (0.0 to 1.0)
+                                val progress = (currentInflow.toFloat() / session.dailyGoalAmount.toFloat()).coerceIn(0f, 1f)
+                                dynamicGoals.add(
+                                    GoalUi(
+                                        title = "Meta diária",
+                                        currentFormatted = currentInflow.toCurrencyString(),
+                                        targetFormatted = session.dailyGoalAmount.toCurrencyString(),
+                                        progress = progress,
+                                        icon = Icons.Default.Flag,
+                                        isAchieved = currentInflow >= session.dailyGoalAmount
+                                    )
+                                )
+                            }
+
+                            // TODO: Later on we can add other goals here
+
+                            CashDetailUiState(
+                                session = session.toUiModel(),
+                                summary = summaryUi,
+                                historyItems = items,
+                                categoryBalances = mockCategoryBalances,
+                                paymentMethodBalances = mockPaymentMethodBalances,
+                                goals = dynamicGoals,
+                                isLoading = false
+                            )
+                        }
                     }
                 }
-            }
+                .collect { newState ->
+                    _uiState.value = newState
+                }
+        }
+    }
+
+    fun updateDailyGoal(newAmount: Long) {
+        viewModelScope.launch {
+            val goalToSave = if (newAmount > 0) newAmount else null
+            cashRepository.updateDailyGoal(cashId, goalToSave)
+            // Flow from getSessionById will automatically refresh the UI state
         }
     }
 }

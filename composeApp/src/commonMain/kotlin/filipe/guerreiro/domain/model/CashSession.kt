@@ -24,6 +24,7 @@ data class CashSession(
     val openingTimeStamp: Instant,
     val closingTimeStamp: Instant? = null,
     val initialAmount: Long,
+    val dailyGoalAmount: Long? = null,
     val status: CashStatusType = CashStatusType.OPEN
 )
 

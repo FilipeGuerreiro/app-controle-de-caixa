@@ -26,6 +26,11 @@ import filipe.guerreiro.ui.theme.ColorGalleryScreen
 import filipe.guerreiro.ui.paymentmethod.PaymentMethodScreen
 import filipe.guerreiro.ui.category.CategoryScreen
 import filipe.guerreiro.ui.transaction.TransactionScreen
+import filipe.guerreiro.ui.onboarding.OnboardingCategoriesScreen
+import filipe.guerreiro.ui.onboarding.OnboardingPaymentMethodsScreen
+import filipe.guerreiro.ui.onboarding.OnboardingCompleteScreen
+import filipe.guerreiro.ui.onboarding.OnboardingViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 // Constantes de duração (Material Motion specs)
 private const val SPLASH_FADE_DURATION = 700
@@ -129,6 +134,71 @@ fun AppNavHost(
             UserSelectionScreen(navController)
         }
 
+        // ── Onboarding (pós-registro) ─────────────────────────────────────
+
+        composable(
+            route = "onboardingCategories",
+            enterTransition = { slideInFromRight() },
+            exitTransition = { fadeThroughExit() },
+            popEnterTransition = { slideInFromLeft() },
+            popExitTransition = { slideOutToRight() },
+        ) {
+            val onboardingViewModel: OnboardingViewModel = koinViewModel(
+                key = "onboarding"
+            )
+            OnboardingCategoriesScreen(
+                viewModel = onboardingViewModel,
+                onContinue = {
+                    navController.navigate("onboardingPaymentMethods")
+                },
+                onSkip = {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo("onboardingCategories") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = "onboardingPaymentMethods",
+            enterTransition = { fadeThroughEnter() },
+            exitTransition = { fadeThroughExit() },
+            popEnterTransition = { fadeThroughEnter() },
+            popExitTransition = { fadeThroughExit() },
+        ) {
+            val onboardingViewModel: OnboardingViewModel = koinViewModel(
+                key = "onboarding"
+            )
+            OnboardingPaymentMethodsScreen(
+                viewModel = onboardingViewModel,
+                onComplete = {
+                    navController.navigate("onboardingComplete") {
+                        popUpTo("onboardingCategories") { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo("onboardingCategories") { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "onboardingComplete",
+            enterTransition = { fadeIn(animationSpec = tween(FADE_THROUGH_DURATION)) },
+            exitTransition = { fadeOut(animationSpec = tween(FADE_THROUGH_DURATION)) },
+        ) {
+            OnboardingCompleteScreen(
+                onGoToHome = {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo("onboardingComplete") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(
             route = "opening",
             enterTransition = { slideInFromRight() },
@@ -138,7 +208,14 @@ fun AppNavHost(
         ) {
             OpeningScreen(
                 onBackClick = { navController.popBackStack() },
-                onSessionOpened = { navController.popBackStack() }
+                onSessionOpened = { newCashId ->
+                    // Pop opening screen
+                    navController.popBackStack()
+                    // Pop old CashDetailScreen if it's on the back stack (no-op otherwise)
+                    navController.popBackStack<CashDetailRoute>(inclusive = true)
+                    // Navigate to the newly created session
+                    navController.navigate(CashDetailRoute(cashId = newCashId.toString()))
+                }
             )
         }
 
@@ -181,7 +258,6 @@ fun AppNavHost(
         ) {
             HomeScreen(
                 onOpenCashClick = { navController.navigate("opening") },
-                onCloseCashClick = { navController.navigate("closing") },
                 onNavigateToCash = { cashId ->
                     navController.navigate(CashDetailRoute(cashId = cashId.toString()))
                 },
@@ -218,7 +294,9 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToTransaction = { navController.navigate("transaction") },
                 onNavigateToCategories = { navController.navigate("categories") },
-                onNavigateToPaymentMethods = { navController.navigate("paymentMethods") }
+                onNavigateToPaymentMethods = { navController.navigate("paymentMethods") },
+                onOpenCashClick = { navController.navigate("opening") },
+                onCloseCashClick = { navController.navigate("closing") }
             )
         }
 

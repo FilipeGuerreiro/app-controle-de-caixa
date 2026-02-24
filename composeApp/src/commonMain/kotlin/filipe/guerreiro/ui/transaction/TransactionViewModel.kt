@@ -10,11 +10,9 @@ import filipe.guerreiro.domain.repository.PaymentMethodRepository
 import filipe.guerreiro.domain.repository.TransactionRepository
 import filipe.guerreiro.domain.session.SessionManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -32,6 +30,7 @@ data class TransactionUiState(
     val paymentMethods: List<PaymentMethod> = emptyList(),
     val isSaved: Boolean = false,
     val isSaving: Boolean = false,
+    val showValidationErrors: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -119,12 +118,12 @@ class TransactionViewModel(
         }
 
         if (validationError != null) {
-            _localUiState.update { it.copy(errorMessage = validationError) }
+            _localUiState.update { it.copy(showValidationErrors = true) }
             return
         }
 
         viewModelScope.launch {
-            _localUiState.update { it.copy(isSaving = true, errorMessage = null) }
+            _localUiState.update { it.copy(isSaving = true, showValidationErrors = false, errorMessage = null) }
             try {
                 val user = sessionManager.currentUser.value
                 if (user == null) {

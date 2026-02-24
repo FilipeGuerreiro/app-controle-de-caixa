@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.SportsScore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -63,15 +64,14 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun OpeningScreen(
     onBackClick: () -> Unit = {},
-    onSessionOpened: () -> Unit = {},
+    onSessionOpened: (Long) -> Unit = {},
     viewModel: OpeningViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    
-    // Navega de volta quando sessão é aberta com sucesso
+
     LaunchedEffect(state.isSessionOpened) {
-        if (state.isSessionOpened) {
-            onSessionOpened()
+        if (state.isSessionOpened && state.openedSessionId != null) {
+            onSessionOpened(state.openedSessionId!!)
         }
     }
     
@@ -79,6 +79,7 @@ fun OpeningScreen(
         state = state,
         onBackClick = onBackClick,
         onAmountChange = viewModel::onAmountChange,
+        onDailyGoalChange = viewModel::onDailyGoalChange,
         onSuggestedAmountClick = viewModel::resetToSuggestedAmount,
         onOpenSession = viewModel::openSession
     )
@@ -90,6 +91,7 @@ fun OpeningScreenContent(
     state: OpeningUiState,
     onBackClick: () -> Unit,
     onAmountChange: (String) -> Unit,
+    onDailyGoalChange: (String) -> Unit,
     onSuggestedAmountClick: () -> Unit,
     onOpenSession: () -> Unit,
     modifier: Modifier = Modifier
@@ -212,6 +214,43 @@ fun OpeningScreenContent(
                                 style = currencyTextStyle.copy(
                                     color = MaterialTheme.financial.profit
                                 )
+                            )
+                        },
+                        textStyle = currencyTextStyle,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        ),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    OutlinedTextField(
+                        value = TextFieldValue(
+                            text = state.displayDailyGoal,
+                            selection = TextRange(state.displayDailyGoal.length)
+                        ),
+                        onValueChange = { tfv ->
+                            onDailyGoalChange(tfv.text)
+                        },
+                        label = { Text("Meta Diária (Opcional)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        modifier = Modifier.fillMaxWidth(),
+                        prefix = {
+                            Text(
+                                text = "R$ ",
+                                style = currencyTextStyle.copy(
+                                    color = MaterialTheme.financial.profit
+                                )
+                            )
+                        },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.SportsScore,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         },
                         textStyle = currencyTextStyle,
@@ -366,10 +405,12 @@ fun OpeningScreenPreview() {
         OpeningScreenContent(
             state = OpeningUiState(
                 suggestedAmount = 12000L,
+                displayDailyGoal = "250,00",
                 isLoading = false
             ),
             onBackClick = {},
             onAmountChange = {},
+            onDailyGoalChange = {},
             onSuggestedAmountClick = {},
             onOpenSession = {}
         )
@@ -387,6 +428,7 @@ fun OpeningScreenLoadingPreview() {
             ),
             onBackClick = {},
             onAmountChange = {},
+            onDailyGoalChange = {},
             onSuggestedAmountClick = {},
             onOpenSession = {}
         )

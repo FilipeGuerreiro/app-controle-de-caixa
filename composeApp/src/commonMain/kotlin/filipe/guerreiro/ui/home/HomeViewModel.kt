@@ -50,12 +50,14 @@ data class HomeUiState(
     val quickActions: List<QuickActionUiModel> = emptyList(),
     val recentActivities: List<RecentActivity> = emptyList(),
     val isCashOpen: Boolean = false,
-    val isFirstAccess: Boolean = false, // true quando usuário nunca criou um caixa
-    val dailyGoal: String = "R$ 500,00", // Mockado por enquanto
-    val dailyProgress: Int = 0,
+    val isFirstAccess: Boolean = false,
+    val dailyGoalAmount: Long? = null,
+    val totalIncomeValue: Long = 0L,
     val totalIncome: String = "",
     val totalExpense: String = "",
     val currentBalance: String = "R$ 0,00",
+    val initialAmountValue: Long = 0L,
+    val currentBalanceValue: Long = 0L,
     val currentCashId: Long? = null,
     val quickActionError: String? = null
 )
@@ -130,6 +132,8 @@ class HomeViewModel(
                             totalIncome = 0L.toCurrencyString(),
                             totalExpense = 0L.toCurrencyString(),
                             currentBalance = 0L.toCurrencyString(),
+                            initialAmountValue = 0L,
+                            currentBalanceValue = 0L,
                             recentActivities = emptyList(),
                             quickActions = emptyList()
                         )
@@ -152,6 +156,10 @@ class HomeViewModel(
                             totalIncome = balance.totalIncomes.toCurrencyString(),
                             totalExpense = balance.totalExpenses.toCurrencyString(),
                             currentBalance = balance.currentBalance.toCurrencyString(),
+                            initialAmountValue = cashSession.initialAmount,
+                            currentBalanceValue = balance.currentBalance,
+                            dailyGoalAmount = cashSession.dailyGoalAmount,
+                            totalIncomeValue = balance.totalIncomes,
                             recentActivities = transactions.map { tx ->
                                 val base = tx.toRecentActivity()
                                 val category = categories.find { it.id == tx.categoryId }

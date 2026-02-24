@@ -20,7 +20,22 @@ class IosSessionPreferences: SessionPreferences {
         defaults.setInteger(userId, KEY)
     }
 
+    private val GOAL_KEY = "default_daily_goal"
+
+    override suspend fun getDefaultDailyGoal(): Long? {
+        return if (defaults.objectForKey(GOAL_KEY) != null) {
+            defaults.integerForKey(GOAL_KEY)
+        } else {
+            null
+        }
+    }
+
+    override suspend fun setDefaultDailyGoal(amount: Long) {
+        defaults.setInteger(amount, GOAL_KEY)
+    }
+
     override suspend fun clearSession() {
         defaults.removeObjectForKey(KEY)
+        defaults.removeObjectForKey(GOAL_KEY)
     }
 }

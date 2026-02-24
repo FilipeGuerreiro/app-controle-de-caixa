@@ -57,8 +57,8 @@ fun RegisterScreen(
         onBusinessNameChange = viewModel::onBusinessNameChange,
         onSubmit = {
             viewModel.register {
-                navController.navigate("home") {
-                    popUpTo("userSelection") { inclusive = true }
+                navController.navigate("onboardingCategories") {
+                    popUpTo("register") { inclusive = true }
                 }
             }
         }

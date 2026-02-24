@@ -1,9 +1,9 @@
 package filipe.guerreiro.ui.home
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,19 +17,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddBusiness
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,12 +56,10 @@ import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import filipe.guerreiro.ui.home.QuickActionAmountDialog
 
 @Composable
 fun HomeScreen(
     onOpenCashClick: () -> Unit,
-    onCloseCashClick: () -> Unit,
     onNavigateToCash: (Long?) -> Unit,
     onNavigateToUserSelection: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
@@ -98,10 +97,13 @@ fun HomeScreen(
             isCashOpen = uiState.isCashOpen,
             isFirstAccess = uiState.isFirstAccess,
             currentBalance = uiState.currentBalance,
+            initialBalance = uiState.initialAmountValue,
+            finalBalance = uiState.currentBalanceValue,
             totalIncome = uiState.totalIncome,
             totalExpense = uiState.totalExpense,
+            dailyGoalAmount = uiState.dailyGoalAmount,
+            totalIncomeValue = uiState.totalIncomeValue,
             onOpenCashClick = onOpenCashClick,
-            onCloseCashClick = onCloseCashClick,
             onNavigateToCash = { onNavigateToCash(uiState.currentCashId) }
         )
 
@@ -349,10 +351,13 @@ fun CashStatusCard(
     isCashOpen: Boolean = false,
     isFirstAccess: Boolean = false,
     currentBalance: String = "",
+    initialBalance: Long = 0,
+    finalBalance: Long = 0,
     totalIncome: String = "",
     totalExpense: String = "",
+    dailyGoalAmount: Long? = null,
+    totalIncomeValue: Long = 0L,
     onOpenCashClick: () -> Unit,
-    onCloseCashClick: () -> Unit,
     onNavigateToCash: () -> Unit
 ) {
     // Se for primeiro acesso, exibe card introdutório
@@ -362,13 +367,15 @@ fun CashStatusCard(
     }
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isLoading) { onNavigateToCash() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             // Linha Superior: Ícone + Status + Seta
             Row(
@@ -411,28 +418,42 @@ fun CashStatusCard(
                         ),
                         modifier = Modifier.weight(1f)
                     )
+
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = "Ver detalhes",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             if (isLoading) {
-                SkeletonBox(width = 160.dp, height = 32.dp)
+                SkeletonBox(width = 160.dp, height = 40.dp)
             } else {
                 Column {
                     Text(
                         text = "Saldo atual",
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = currentBalance,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                    Row {
+                        Text(
+                            text = currentBalance,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         )
-                    )
+                        Spacer(modifier = Modifier.width(10.dp).height(4.dp))
+                        filipe.guerreiro.ui.components.BalanceDeltaIndicator(
+                            currentBalance = finalBalance,
+                            initialBalance = initialBalance
+                        )
+                    }
                 }
             }
 
@@ -444,80 +465,144 @@ fun CashStatusCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (isLoading) {
-                    SkeletonBox(modifier = Modifier.weight(1f), height = 24.dp)
-                    SkeletonBox(modifier = Modifier.weight(1f), height = 24.dp)
+                    SkeletonBox(modifier = Modifier.weight(1f), height = 64.dp, shape = RoundedCornerShape(12.dp))
+                    SkeletonBox(modifier = Modifier.weight(1f), height = 64.dp, shape = RoundedCornerShape(12.dp))
                 } else {
-                    Text(
-                        text = "Entradas: $totalIncome",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.financial.profit
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.financial.profitContainer.copy(alpha = 0.4f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.financial.profit.copy(alpha = 0.2f),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowUpward,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.financial.profit,
+                                    modifier = Modifier.padding(6.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Entradas",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = totalIncome,
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.financial.profit
+                                    )
+                                )
+                            }
+                        }
+                    }
 
-                    Text(
-                        text = "Saídas: $totalExpense",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDownward,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(6.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Saídas",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = totalExpense,
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Botões de Ação
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (isLoading) {
-                    SkeletonBox(Modifier.weight(1f), height = 44.dp, shape = RoundedCornerShape(8.dp))
-                    SkeletonBox(Modifier.weight(1f), height = 44.dp, shape = RoundedCornerShape(8.dp))
-                } else {
-                    // Botão principal muda conforme status
-                    Button(
-                        onClick = if (isCashOpen) onCloseCashClick else onOpenCashClick,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isCashOpen) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            contentColor = if (isCashOpen) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isCashOpen) Icons.Default.Lock else Icons.Default.LockOpen,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = if (isCashOpen) "Fechar Caixa" else "Abrir Caixa")
-                    }
+            // Goal Progress (only when goal is defined)
+            if (!isLoading && dailyGoalAmount != null && dailyGoalAmount > 0) {
+                val progress = (totalIncomeValue.toFloat() / dailyGoalAmount.toFloat()).coerceIn(0f, 1f)
+                val progressPercent = (progress * 100).toInt()
+                val progressColor = when {
+                    progress >= 1f -> MaterialTheme.financial.profit
+                    progress >= 0.7f -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.secondary
+                }
 
-                    OutlinedButton(
-                        onClick = onNavigateToCash,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = progressColor.copy(alpha = 0.08f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Visibility,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Flag,
+                                contentDescription = null,
+                                tint = progressColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Meta diária: ${totalIncomeValue.toCurrencyString()} de ${dailyGoalAmount.toCurrencyString()}",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "$progressPercent%",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = progressColor
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = progressColor,
+                            trackColor = progressColor.copy(alpha = 0.15f),
+                            drawStopIndicator = {}
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Ver Detalhes")
                     }
                 }
             }
@@ -574,21 +659,21 @@ fun RecentActivities(activities: List<RecentActivity>) {
 fun ActivityItem(activity: RecentActivity) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 val bgColor = if (activity.isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
                 val iconColor = if (activity.isIncome) {
@@ -598,16 +683,16 @@ fun ActivityItem(activity: RecentActivity) {
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(50),
-                    color = bgColor.copy(alpha = 0.1f),
-                    modifier = Modifier.size(40.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = bgColor.copy(alpha = 0.15f),
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
                         imageVector = activity.icon,
                         contentDescription = null,
                         tint = iconColor,
                         modifier = Modifier
-                            .padding(8.dp)
+                            .padding(10.dp)
                             .size(24.dp)
                     )
                 }
@@ -615,7 +700,7 @@ fun ActivityItem(activity: RecentActivity) {
                 Column {
                     Text(
                         text = activity.title,
-                        style = MaterialTheme.typography.bodyMedium.copy(
+                        style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -639,8 +724,8 @@ fun ActivityItem(activity: RecentActivity) {
 
             Text(
                 text = "$amountSign${activity.amount.toCurrencyString()}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
                     color = amountColor
                 )
             )
@@ -654,7 +739,6 @@ fun HomeScreenPreview() {
     ControleDeCaixaTheme {
         HomeScreen(
             onOpenCashClick = {},
-            onCloseCashClick = {},
             onNavigateToCash = {},
             onNavigateToUserSelection = {}
         )

@@ -13,7 +13,15 @@ val desktopDatabaseModule = module {
         val dbFile = File(System.getProperty("java.io.tmpdir"), "caixa.db")
         Room.databaseBuilder<AppDatabase>(
             name = dbFile.absolutePath
-        )
+        ).addMigrations(MIGRATION_4_5)
+    }
+}
+
+val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+    override fun migrate(connection: androidx.sqlite.SQLiteConnection) {
+        connection.prepare("ALTER TABLE cash_sessions ADD COLUMN dailyGoalAmount INTEGER DEFAULT NULL").use { stmt ->
+            stmt.step()
+        }
     }
 }
 

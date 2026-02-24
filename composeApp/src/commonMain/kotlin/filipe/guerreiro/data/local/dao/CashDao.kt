@@ -41,4 +41,7 @@ interface CashDao {
 
     @Query("UPDATE cash_sessions SET status = :status, closingTimeStamp = :closingTime WHERE id = :sessionId")
     suspend fun closeSession(sessionId: Long, status: CashStatusType, closingTime: Instant)
+
+    @Query("UPDATE cash_sessions SET dailyGoalAmount = :amount WHERE id = :sessionId")
+    suspend fun updateDailyGoal(sessionId: Long, amount: Long?)
 }

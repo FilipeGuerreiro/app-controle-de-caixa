@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -21,22 +25,29 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.ui.components.AnimatedBalanceText
 import filipe.guerreiro.ui.components.SkeletonBox
 import filipe.guerreiro.ui.components.SkeletonCircle
 import filipe.guerreiro.ui.theme.financial
 
 @Composable
-fun DailySummaryCard(summary: CashSummaryUi) {
+fun DailySummaryCard(
+    summary: CashSummaryUi,
+    onOpenCashClick: () -> Unit = {},
+    onCloseCashClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -57,29 +68,26 @@ fun DailySummaryCard(summary: CashSummaryUi) {
                 )
                 Column(
                     modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.End
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = if (summary.status == "Aberto") "Saldo Atual" else "Saldo Final",
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        AnimatedBalanceText(
-                            isLoading = false,
-                            value = summary.currentBalanceValue,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = if (summary.status == "Aberto") MaterialTheme.financial.profit else MaterialTheme.colorScheme.onSurface
-                            )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = summary.currentBalanceValue.toCurrencyString(),
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        val deltaColor = if (summary.isDeltaPositive) {
-                            MaterialTheme.financial.profit
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        }
-                    }
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    filipe.guerreiro.ui.components.BalanceDeltaIndicator(
+                        currentBalance = summary.currentBalanceValue,
+                        initialBalance = summary.initialAmountValue
+                    )
                 }
             }
 
@@ -131,6 +139,55 @@ fun DailySummaryCard(summary: CashSummaryUi) {
                     isIncome = false
                 )
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            val isCashOpen = summary.status == "Aberto"
+            if (isCashOpen) {
+                Button(
+                    onClick = onCloseCashClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Fechar Caixa",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+            } else if (summary.isLatestSession) {
+                Button(
+                    onClick = onOpenCashClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LockOpen,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Abrir Novo Caixa",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+            }
         }
     }
 }
@@ -140,7 +197,8 @@ fun DailySummaryCardSkeleton() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -237,15 +295,16 @@ private fun SummaryValueColumn(
     Column(modifier = modifier) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(4.dp))
         AnimatedBalanceText(
             isLoading = false,
             value = value,
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
-                color = valueColor ?: MaterialTheme.colorScheme.onSurface
+                color = valueColor ?: MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
     }
@@ -280,42 +339,47 @@ private fun MovementIndicator(
     value: Long,
     isIncome: Boolean
 ) {
-    // Cores extraídas da sua implementação original para manter a consistência
     val accentColor = if (isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
-    val iconBackground = if (isIncome) MaterialTheme.financial.profitContainer else MaterialTheme.colorScheme.errorContainer
+    val containerColor = if (isIncome) MaterialTheme.financial.profitContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
     val icon = if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
 
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Surface(
+        modifier = modifier.padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = containerColor
     ) {
-        Surface(
-            modifier = Modifier.size(32.dp),
-            shape = CircleShape,
-            color = Color.Transparent
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = accentColor,
-                modifier = Modifier.padding(6.dp)
-            )
-        }
-        Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            AnimatedBalanceText(
-                isLoading = false,
-                value = value,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = accentColor
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = accentColor.copy(alpha = 0.2f),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.padding(6.dp)
                 )
-            )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                AnimatedBalanceText(
+                    isLoading = false,
+                    value = value,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = accentColor
+                    )
+                )
+            }
         }
     }
 }

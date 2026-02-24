@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -197,20 +196,6 @@ fun ClosingSummaryCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
-                
-                Surface(
-                    color = MaterialTheme.financial.profitContainer,
-                    shape = RoundedCornerShape(999.dp)
-                ) {
-                    Text(
-                        text = "Aberto",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            color = MaterialTheme.financial.profit,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                }
             }
 
             // Saldos

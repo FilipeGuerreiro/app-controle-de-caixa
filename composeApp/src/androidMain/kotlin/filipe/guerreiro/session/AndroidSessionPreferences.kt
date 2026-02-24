@@ -17,6 +17,7 @@ class AndroidSessionPreferences(
 ) : SessionPreferences {
 
     private val LOGGED_USER_ID = longPreferencesKey("logged_user_id")
+    private val DEFAULT_DAILY_GOAL = longPreferencesKey("default_daily_goal")
 
     override suspend fun getLoggedUserId(): Long? {
         val result = context.dataStore.data
@@ -31,9 +32,22 @@ class AndroidSessionPreferences(
         }
     }
 
+    override suspend fun getDefaultDailyGoal(): Long? {
+        return context.dataStore.data
+            .map { prefs -> prefs[DEFAULT_DAILY_GOAL] }
+            .first()
+    }
+
+    override suspend fun setDefaultDailyGoal(amount: Long) {
+        context.dataStore.edit { prefs ->
+            prefs[DEFAULT_DAILY_GOAL] = amount
+        }
+    }
+
     override suspend fun clearSession() {
         context.dataStore.edit { prefs ->
             prefs.remove(LOGGED_USER_ID)
+            prefs.remove(DEFAULT_DAILY_GOAL)
         }
     }
 }
