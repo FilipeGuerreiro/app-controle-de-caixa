@@ -33,7 +33,8 @@ import androidx.compose.material3.TextButton
 fun HistorySection(
     items: List<HistoryItemUi>,
     isOpen: Boolean,
-    onAddTransaction: () -> Unit = {}
+    onAddTransaction: () -> Unit = {},
+    onTransactionClick: (String) -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
@@ -72,21 +73,28 @@ fun HistorySection(
             )
         } else {
             items.forEach { item ->
-                HistoryCard(item = item)
+                HistoryCard(
+                    item = item,
+                    onClick = { onTransactionClick(item.id) }
+                )
             }
         }
     }
 }
 
 @Composable
-fun HistoryCard(item: HistoryItemUi) {
+fun HistoryCard(
+    item: HistoryItemUi,
+    onClick: () -> Unit = {}
+) {
     val color = if (item.isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier

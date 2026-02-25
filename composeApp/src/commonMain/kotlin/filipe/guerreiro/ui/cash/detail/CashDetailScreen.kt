@@ -90,7 +90,8 @@ fun CashDetailScreen(
                             HistorySection(
                                 items = uiState.historyItems,
                                 isOpen = uiState.summary.status == "Aberto",
-                                onAddTransaction = onNavigateToTransaction
+                                onAddTransaction = onNavigateToTransaction,
+                                onTransactionClick = { viewModel.selectTransaction(it) }
                             )
                         }
                         DetailSection.GOALS -> {
@@ -119,6 +120,14 @@ fun CashDetailScreen(
                 viewModel.updateDailyGoal(newGoal)
                 showEditGoalDialog = false
             }
+        )
+    }
+
+    // Transaction Detail Bottom Sheet
+    uiState.selectedTransaction?.let { transaction ->
+        TransactionDetailBottomSheet(
+            transaction = transaction,
+            onDismiss = { viewModel.clearSelectedTransaction() }
         )
     }
 }

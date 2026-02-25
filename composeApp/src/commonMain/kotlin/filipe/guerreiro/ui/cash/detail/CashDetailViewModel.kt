@@ -31,6 +31,8 @@ data class CashDetailUiState(
     val categoryBalances: List<BreakdownItemUi> = emptyList(),
     val paymentMethodBalances: List<BreakdownItemUi> = emptyList(),
     val goals: List<GoalUi> = emptyList(),
+    val transactionDetails: Map<String, TransactionDetailUi> = emptyMap(),
+    val selectedTransaction: TransactionDetailUi? = null,
     val isLoading: Boolean = true
 )
 
@@ -58,6 +60,19 @@ data class HistoryItemUi(
     val time: String,
     val method: String,
     val amountLabel: String,
+    val isIncome: Boolean,
+    val icon: ImageVector
+)
+
+data class TransactionDetailUi(
+    val id: String,
+    val title: String,
+    val typeName: String,
+    val amountFull: String,
+    val dateFull: String,
+    val categoryName: String?,
+    val paymentMethodName: String?,
+    val description: String,
     val isIncome: Boolean,
     val icon: ImageVector
 )
@@ -100,7 +115,7 @@ class CashDetailViewModel(
                         paymentMethodRepository.getPaymentMethods(session.userId),
                         cashRepository.getCurrentCashSession(session.userId)
                     ) { transactions, balance, categories, paymentMethods, latestSession ->
-                        val items = transactions.map { tx ->
+                        val mappedTransactions = transactions.map { tx ->
                             val category = categories.find { it.id == tx.categoryId }
                             val paymentMethod = paymentMethods.find { it.id == tx.paymentMethodId }
                             val title = listOfNotNull(category?.name, paymentMethod?.name).joinToString(" • ")
@@ -108,8 +123,9 @@ class CashDetailViewModel(
                             val isIncome = tx.type.name == filipe.guerreiro.domain.model.TransactionType.INCOME.name
                             val local = tx.timestamp.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
                             val formattedTime = "${local.day}/${local.month.number}/${local.year} ${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
+                            val dateFull = "${local.day.toString().padStart(2, '0')}/${local.month.number.toString().padStart(2, '0')}/${local.year} às ${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
 
-                            HistoryItemUi(
+                            val historyItem = HistoryItemUi(
                                 id = tx.id.toString(),
                                 title = if (title.isNotEmpty()) title else tx.description,
                                 time = formattedTime,
@@ -118,7 +134,25 @@ class CashDetailViewModel(
                                 isIncome = isIncome,
                                 icon = if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
                             )
+                            
+                            val detailItem = TransactionDetailUi(
+                                id = tx.id.toString(),
+                                title = title.ifEmpty { "Sem Categoria" },
+                                typeName = if (isIncome) "Entrada de Caixa" else "Saída de Caixa",
+                                amountFull = tx.amount.toCurrencyString(),
+                                dateFull = dateFull,
+                                categoryName = category?.name,
+                                paymentMethodName = paymentMethod?.name,
+                                description = tx.description.ifEmpty { "Nenhuma descrição fornecida." },
+                                isIncome = isIncome,
+                                icon = historyItem.icon
+                            )
+                            
+                            Pair(historyItem, detailItem)
                         }
+
+                        val items = mappedTransactions.map { it.first }
+                        val detailsMap = mappedTransactions.associate { it.second.id to it.second }
 
                             // Mocked data for Category Balances
                             val mockCategoryBalances = listOf(
@@ -223,6 +257,8 @@ class CashDetailViewModel(
                                 categoryBalances = mockCategoryBalances,
                                 paymentMethodBalances = mockPaymentMethodBalances,
                                 goals = dynamicGoals,
+                                transactionDetails = detailsMap,
+                                selectedTransaction = _uiState.value.selectedTransaction,
                                 isLoading = false
                             )
                         }
@@ -240,5 +276,16 @@ class CashDetailViewModel(
             cashRepository.updateDailyGoal(cashId, goalToSave)
             // Flow from getSessionById will automatically refresh the UI state
         }
+    }
+
+    fun selectTransaction(id: String) {
+        val details = _uiState.value.transactionDetails[id]
+        if (details != null) {
+            _uiState.value = _uiState.value.copy(selectedTransaction = details)
+        }
+    }
+
+    fun clearSelectedTransaction() {
+        _uiState.value = _uiState.value.copy(selectedTransaction = null)
     }
 }
