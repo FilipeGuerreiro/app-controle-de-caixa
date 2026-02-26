@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import filipe.guerreiro.ui.theme.financial
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.Icon
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +50,7 @@ private enum class SummaryTab(val label: String) {
 fun SummaryBreakdownSection(
     categoryBalances: List<BreakdownItemUi>,
     paymentMethodBalances: List<BreakdownItemUi>,
+    isOpen: Boolean = false,
     onManageCategories: () -> Unit = {},
     onManagePaymentMethods: () -> Unit = {},
     onAddTransaction: () -> Unit = {}
@@ -136,7 +138,7 @@ fun SummaryBreakdownSection(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ReceiptLong,
+                        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                         contentDescription = "Empty",
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -151,14 +153,16 @@ fun SummaryBreakdownSection(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Adicione entradas ou saídas para ver o resumo financeiro.",
+                        text = if (isOpen) "Adicione entradas ou saídas para ver o resumo financeiro." else "Não houve nenhum lançamento no caixa",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(24.dp))
-                    TextButton(onClick = onAddTransaction) {
-                        Text("Adicionar Transação")
+                    if (isOpen) {
+                        TextButton(onClick = onAddTransaction) {
+                            Text("Adicionar Transação")
+                        }
                     }
                 }
             }

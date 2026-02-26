@@ -117,6 +117,7 @@ fun CashDetailScreen(
                             SummaryBreakdownSection(
                                 categoryBalances = uiState.categoryBalances,
                                 paymentMethodBalances = uiState.paymentMethodBalances,
+                                isOpen = uiState.summary.status == "Aberto",
                                 onManageCategories = onNavigateToCategories,
                                 onManagePaymentMethods = onNavigateToPaymentMethods,
                                 onAddTransaction = onNavigateToTransaction

@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AddBusiness
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -24,6 +25,8 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import filipe.guerreiro.domain.model.toCurrencyString
 import filipe.guerreiro.ui.components.QuickActionSectionSkeleton
-import filipe.guerreiro.ui.components.RecentActivitiesSkeleton
 import filipe.guerreiro.ui.components.SkeletonBox
 import filipe.guerreiro.ui.components.SkeletonCircle
 import filipe.guerreiro.ui.theme.ControleDeCaixaTheme
@@ -125,17 +127,25 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Recent Activities com Skeleton Loading encapsulado
-        val showEmptyMessageActivities = !showSkeleton && uiState.recentActivities.isEmpty()
-
-        if (showSkeleton) {
-            RecentActivitiesSkeleton(itemCount = 3)
-        } else if (uiState.recentActivities.isNotEmpty()) {
-            RecentActivities(activities = uiState.recentActivities)
+        // Smart Alerts
+        if (!showSkeleton && uiState.isCashOpenForTooLong) {
+            SmartAlertsSection(
+                onNavigateToCash = { onNavigateToCash(uiState.currentCashId) }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Mensagem de estado vazio quando não há dados
-        if (showEmptyMessageQuickAction && showEmptyMessageActivities && !uiState.isFirstAccess) {
+        // Performance Insights
+        if (!showSkeleton && uiState.isCashOpen) {
+            PerformanceInsightsSection(
+                averageTicket = uiState.averageTicket.toCurrencyString(),
+                salesCount = uiState.salesCount
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Mensagem de estado vazio quando não há dados e nenhum insight
+        if (showEmptyMessageQuickAction && uiState.salesCount == 0 && !uiState.isFirstAccess) {
             EmptyStateMessage()
         }
     }
@@ -286,7 +296,7 @@ fun EmptyStateMessage(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Registre suas primeiras entradas e saídas para visualizar ações rápidas e atividades recentes aqui.",
+                text = "Registre suas primeiras entradas e saídas para visualizar suas ações rápidas e indicadores do dia.",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -611,124 +621,135 @@ fun CashStatusCard(
 }
 
 @Composable
-fun RecentActivities(activities: List<RecentActivity>) {
-    Column(
+fun SmartAlertsSection(
+    onNavigateToCash: () -> Unit
+) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp)
+            .clickable { onNavigateToCash() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 0.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Atividades Recentes",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Atenção: Caixa Aberto!",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
                 )
-            )
-            Text(
-                text = "Ver todas",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier.padding(end = 4.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            activities.forEach { activity ->
-                ActivityItem(activity = activity)
+                Text(
+                    text = "Seu caixa está aberto há mais de 24 horas. Deseja conferir e fechar?",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
         }
     }
 }
 
 @Composable
-fun ActivityItem(activity: RecentActivity) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+fun PerformanceInsightsSection(averageTicket: String, salesCount: Int) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
+        Text(
+            text = "Visão do Dia",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
+            Card(
                 modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                val bgColor = if (activity.isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
-                val iconColor = if (activity.isIncome) {
-                    MaterialTheme.financial.profit
-                } else {
-                    MaterialTheme.colorScheme.error
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = bgColor.copy(alpha = 0.15f),
-                    modifier = Modifier.size(44.dp)
-                ) {
-                    Icon(
-                        imageVector = activity.icon,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .size(24.dp)
-                    )
-                }
-
-                Column {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(6.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = activity.title,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold,
+                        text = "Média por Venda",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = averageTicket,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     )
+                }
+            }
+
+            Card(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AddBusiness,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.padding(6.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "${activity.time} • ${activity.type}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "Qtd. de Vendas",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "$salesCount",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
             }
-
-            // Valor formatado com cor
-            val amountColor = if (activity.isIncome) {
-                MaterialTheme.financial.profit
-            } else {
-                MaterialTheme.colorScheme.error
-            }
-            val amountSign = if (activity.isIncome) "+" else "-"
-
-            Text(
-                text = "$amountSign${activity.amount.toCurrencyString()}",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = amountColor
-                )
-            )
         }
     }
 }

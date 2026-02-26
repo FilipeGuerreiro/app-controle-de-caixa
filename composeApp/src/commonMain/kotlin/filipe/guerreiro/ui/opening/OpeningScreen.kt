@@ -236,7 +236,7 @@ fun OpeningScreenContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Aberto com saldo negativo",
+                            text = "Abrir com saldo negativo",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Medium

@@ -19,23 +19,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
+enum class CashTabFilter {
+    ALL, PROFIT, LOSS
+}
+
 data class CashListUiState(
     val sessions: List<CashSessionUi> = emptyList(),
-    val filteredSessions: List<CashSessionUi> = emptyList(),
+    val currentSession: CashSessionUi? = null,
+    val groupedSessions: Map<String, List<CashSessionUi>> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val filters: CashListFilters = CashListFilters()
+    val selectedDateMillis: Long? = null,
+    val activeFilterTab: CashTabFilter = CashTabFilter.ALL
 )
-
-data class CashListFilters(
-    val minTransactions: Int? = null,
-    val maxTransactions: Int? = null,
-    val startDate: Long? = null, // timestamp
-    val endDate: Long? = null // timestamp
-) {
-    val isActive: Boolean
-        get() = minTransactions != null || maxTransactions != null || startDate != null || endDate != null
-}
 
 data class CashSessionUi(
     val id: Long,
@@ -57,7 +53,10 @@ class CashListViewModel(
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _filters = MutableStateFlow(CashListFilters())
+    private val _selectedDateMillis = MutableStateFlow<Long?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _activeFilterTab = MutableStateFlow(CashTabFilter.ALL)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<CashListUiState> =
@@ -65,14 +64,19 @@ class CashListViewModel(
             sessionManager.currentUser.filterNotNull().flatMapLatest { user ->
                 observeSessionsForUser(user.id)
             },
-            _filters
-        ) { sessions, filters ->
+            _selectedDateMillis,
+            _activeFilterTab
+        ) { sessions, dateMillis, tab ->
+            val (current, grouped) = processSessions(sessions, dateMillis, tab)
+
             CashListUiState(
                 sessions = sessions,
-                filteredSessions = applyFilters(sessions, filters),
+                currentSession = current,
+                groupedSessions = grouped,
                 isLoading = false,
                 error = null,
-                filters = filters
+                selectedDateMillis = dateMillis,
+                activeFilterTab = tab
             )
         }.stateIn(
             scope = viewModelScope,
@@ -118,25 +122,61 @@ class CashListViewModel(
 
 
 
-    fun updateFilters(newFilters: CashListFilters) {
-        _filters.value = newFilters
+    fun updateSelectedDate(dateMillis: Long?) {
+        _selectedDateMillis.value = dateMillis
+    }
+
+    fun updateActiveFilterTab(tab: CashTabFilter) {
+        _activeFilterTab.value = tab
     }
 
     fun clearFilters() {
-        updateFilters(CashListFilters())
+        _selectedDateMillis.value = null
+        _activeFilterTab.value = CashTabFilter.ALL
     }
 
-    private fun applyFilters(sessions: List<CashSessionUi>, filters: CashListFilters): List<CashSessionUi> {
-        if (!filters.isActive) return sessions
+    private fun processSessions(
+        sessions: List<CashSessionUi>,
+        dateMillis: Long?,
+        tab: CashTabFilter
+    ): Pair<CashSessionUi?, Map<String, List<CashSessionUi>>> {
+        val currentSession = sessions.firstOrNull { it.isCurrent }
+        val historySessions = sessions.filter { !it.isCurrent }
 
-        return sessions.filter { session ->
-            val matchesTransactions = (filters.minTransactions == null || session.transactionCount >= filters.minTransactions) &&
-                                      (filters.maxTransactions == null || session.transactionCount <= filters.maxTransactions)
-            
-            val matchesDate = (filters.startDate == null || session.timestamp >= filters.startDate) &&
-                              (filters.endDate == null || session.timestamp <= filters.endDate)
+        val filtered = historySessions.filter { session ->
+            // Date filter: compare day-level (same calendar day)
+            val matchesDate = if (dateMillis != null) {
+                val selectedDay = dateMillis / 86400000L
+                val sessionDay = session.timestamp / 86400000L
+                selectedDay == sessionDay
+            } else true
 
-            matchesTransactions && matchesDate
+            val matchesTab = when (tab) {
+                CashTabFilter.ALL -> true
+                CashTabFilter.PROFIT -> session.balanceValue != null && session.balanceValue > 0
+                CashTabFilter.LOSS -> session.balanceValue != null && session.balanceValue < 0
+            }
+
+            matchesDate && matchesTab
         }
+
+        val grouped = filtered.groupBy { session ->
+            val parts = session.date.split("/", " ", "-")
+            if (parts.size >= 3) {
+                val month = parts[1]
+                val year = parts[2].take(4)
+                val monthName = when(month) {
+                    "1" -> "Janeiro" "2" -> "Fevereiro" "3" -> "Março" "4" -> "Abril"
+                    "5" -> "Maio" "6" -> "Junho" "7" -> "Julho" "8" -> "Agosto"
+                    "9" -> "Setembro" "10" -> "Outubro" "11" -> "Novembro" "12" -> "Dezembro"
+                    else -> month
+                }
+                "$monthName, $year"
+            } else {
+                "Sessões Anteriores"
+            }
+        }
+
+        return Pair(currentSession, grouped)
     }
 }

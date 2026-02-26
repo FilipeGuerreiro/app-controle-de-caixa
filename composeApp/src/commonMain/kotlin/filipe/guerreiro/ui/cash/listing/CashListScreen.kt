@@ -12,20 +12,29 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.FilterListOff
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,7 +54,6 @@ fun CashListScreen(
     viewModel: CashListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showFilterSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -55,17 +63,6 @@ fun CashListScreen(
                         "Meus Caixas",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
-                },
-                actions = {
-                    IconButton(onClick = { 
-                        if (uiState.filters.isActive) viewModel.clearFilters() else showFilterSheet = true 
-                    }) {
-                        Icon(
-                            imageVector = if (uiState.filters.isActive) Icons.Default.FilterListOff else Icons.Default.FilterList,
-                            contentDescription = "Filtrar",
-                            tint = if (uiState.filters.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -102,7 +99,7 @@ fun CashListScreen(
                             )
                         }
                     }
-                    state.filteredSessions.isEmpty() -> {
+                    state.sessions.isEmpty() -> {
                         EmptySessionsState(modifier = Modifier.fillMaxSize())
                     }
                     else -> {
@@ -111,71 +108,151 @@ fun CashListScreen(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-
-                            val firstSession = state.filteredSessions.first()
                             item {
-                                Text(
-                                    text = "Caixa Atual",
-                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                CashSessionProminentCard(
-                                    session = firstSession,
-                                    onClick = { onSessionClick(firstSession.id) }
-                                )
-                            }
+                                var showDatePicker by remember { mutableStateOf(false) }
 
-                            if (state.filteredSessions.size > 1) {
-                                item {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showDatePicker = true },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                ) {
                                     Row(
-                                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            text = "Histórico",
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                        Icon(
+                                            imageVector = Icons.Default.CalendarMonth,
+                                            contentDescription = "Filtrar por data",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
-                                        if (state.filters.isActive) {
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = "(Filtrado)",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = if (state.selectedDateMillis != null) {
+                                                val millis = state.selectedDateMillis
+                                                val days = millis / 86400000L
+                                                val day = ((days % 30.44) + 1).toInt()
+                                                val month = (((days % 365.25) / 30.44) + 1).toInt().coerceIn(1, 12)
+                                                val year = (1970 + (days / 365.25)).toInt()
+                                                val dayFormatted = day.toString().padStart(2, '0')
+                                                val monthFormatted = month.toString().padStart(2, '0')
+                                                val yearFormatted = year.toString().padStart(4, '0')
+                                                "$dayFormatted/$monthFormatted/$yearFormatted"
+                                            } else {
+                                                "Filtrar por data..."
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = if (state.selectedDateMillis != null)
+                                                MaterialTheme.colorScheme.onSurface
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if (state.selectedDateMillis != null) {
+                                            IconButton(
+                                                onClick = { viewModel.updateSelectedDate(null) }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Limpar data",
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
                                     }
                                 }
 
-                                itemsIndexed(
-                                    items = state.filteredSessions.drop(1),
-                                    key = { _, item -> item.id }
-                                ) { index, session ->
-                                    CashSessionListItem(
-                                        session = session,
-                                        onClick = { onSessionClick(session.id) },
-                                        modifier = Modifier.padding(bottom = if (index < state.filteredSessions.size - 2) 8.dp else 0.dp)
+                                if (showDatePicker) {
+                                    val datePickerState = rememberDatePickerState(
+                                        initialSelectedDateMillis = state.selectedDateMillis
                                     )
+                                    DatePickerDialog(
+                                        onDismissRequest = { showDatePicker = false },
+                                        confirmButton = {
+                                            TextButton(
+                                                onClick = {
+                                                    viewModel.updateSelectedDate(datePickerState.selectedDateMillis)
+                                                    showDatePicker = false
+                                                }
+                                            ) {
+                                                Text("Confirmar")
+                                            }
+                                        },
+                                        dismissButton = {
+                                            TextButton(onClick = { showDatePicker = false }) {
+                                                Text("Cancelar")
+                                            }
+                                        }
+                                    ) {
+                                        DatePicker(state = datePickerState)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                CashListFilterBar(
+                                    selectedFilter = state.activeFilterTab,
+                                    onFilterSelected = viewModel::updateActiveFilterTab,
+                                    onClearFilter = viewModel::clearFilters,
+                                    modifier = Modifier.padding(horizontal = 0.dp)
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+
+                            if (state.currentSession != null) {
+                                item {
+                                    Text(
+                                        text = "Caixa Atual",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    )
+                                    CashSessionProminentCard(
+                                        session = state.currentSession,
+                                        onClick = { onSessionClick(state.currentSession.id) }
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                            }
+
+                            if (state.groupedSessions.isEmpty()) {
+                                item {
+                                    EmptySessionsState(modifier = Modifier.fillMaxSize())
+                                }
+                            } else {
+                                state.groupedSessions.forEach { (monthLabel, sessions) ->
+                                    item {
+                                        Row(
+                                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = monthLabel,
+                                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                            )
+                                        }
+                                    }
+
+                                    itemsIndexed(
+                                        items = sessions,
+                                        key = { _, item -> item.id }
+                                    ) { index, session ->
+                                        CashSessionListItem(
+                                            session = session,
+                                            onClick = { onSessionClick(session.id) },
+                                            modifier = Modifier.padding(bottom = if (index < sessions.size - 1) 8.dp else 0.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-
-        if (showFilterSheet) {
-            FilterBottomSheet(
-                currentFilters = uiState.filters,
-                onApply = { 
-                    viewModel.updateFilters(it)
-                    showFilterSheet = false 
-                },
-                onDismiss = { showFilterSheet = false },
-                onClear = { 
-                    viewModel.clearFilters()
-                    showFilterSheet = false
-                }
-            )
         }
     }
 }

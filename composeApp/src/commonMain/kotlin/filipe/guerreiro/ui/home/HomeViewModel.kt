@@ -1,13 +1,10 @@
 package filipe.guerreiro.ui.home
 
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import filipe.guerreiro.domain.model.CashStatusType
 import filipe.guerreiro.domain.model.TransactionType
 import filipe.guerreiro.domain.model.User
 import filipe.guerreiro.domain.model.toCurrencyString
-import filipe.guerreiro.domain.model.toRecentActivity
 import filipe.guerreiro.domain.repository.CashRepository
 import filipe.guerreiro.domain.repository.TransactionRepository
 import filipe.guerreiro.domain.session.SessionManager
@@ -24,16 +21,6 @@ import kotlinx.coroutines.flow.stateIn
 import filipe.guerreiro.domain.repository.CategoryRepository
 import filipe.guerreiro.domain.repository.PaymentMethodRepository
 
-data class RecentActivity(
-    val id: String,
-    val title: String,
-    val time: String,
-    val type: String,
-    val amount: Long,
-    val isIncome: Boolean,
-    val icon: ImageVector
-)
-
 data class QuickActionUiModel(
     val categoryId: Long,
     val paymentMethodId: Long,
@@ -48,7 +35,9 @@ data class HomeUiState(
     val userName: String = "",
     val businessName: String = "",
     val quickActions: List<QuickActionUiModel> = emptyList(),
-    val recentActivities: List<RecentActivity> = emptyList(),
+    val averageTicket: Long = 0L,
+    val salesCount: Int = 0,
+    val isCashOpenForTooLong: Boolean = false,
     val isCashOpen: Boolean = false,
     val isFirstAccess: Boolean = false,
     val dailyGoalAmount: Long? = null,
@@ -134,22 +123,33 @@ class HomeViewModel(
                             currentBalance = 0L.toCurrencyString(),
                             initialAmountValue = 0L,
                             currentBalanceValue = 0L,
-                            recentActivities = emptyList(),
+                            averageTicket = 0L,
+                            salesCount = 0,
+                            isCashOpenForTooLong = false,
                             quickActions = emptyList()
                         )
                     )
                 } else {
                     combine(
                         cashRepository.getSessionBalance(cashSession.id),
-                        transactionRepository.getRecentTransactions(cashSession.id, 5),
+                        transactionRepository.getAllTransactions(cashSession.id),
                         quickActionsFlow,
                         categoriesFlow,
                         paymentMethodsFlow
                     ) { balance, transactions, quickActions, categories, paymentMethods ->
+                        val sales = transactions.filter { it.type == TransactionType.INCOME }
+                        val salesCount = sales.size
+                        val averageTicket = if (salesCount > 0) balance.totalIncomes / salesCount else 0L
+
+                        val nowMs = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                        val openMs = cashSession.openingTimeStamp.toEpochMilliseconds()
+                        val diffMs = nowMs - openMs
+                        val isTooLong = cashSession.status == filipe.guerreiro.domain.model.CashStatusType.OPEN && diffMs > 86400000L
+
                         HomeUiState(
                             isLoading = false,
                             isLoggedIn = true,
-                            isCashOpen = cashSession.status == CashStatusType.OPEN,
+                            isCashOpen = cashSession.status == filipe.guerreiro.domain.model.CashStatusType.OPEN,
                             isFirstAccess = false,
                             userName = user.name,
                             businessName = user.businessName,
@@ -160,21 +160,9 @@ class HomeViewModel(
                             currentBalanceValue = balance.currentBalance,
                             dailyGoalAmount = cashSession.dailyGoalAmount,
                             totalIncomeValue = balance.totalIncomes,
-                            recentActivities = transactions.map { tx ->
-                                val base = tx.toRecentActivity()
-                                val category = categories.find { it.id == tx.categoryId }
-                                val paymentMethod = paymentMethods.find { it.id == tx.paymentMethodId }
-
-                                val title = when {
-                                    category != null && paymentMethod != null ->
-                                        "${category.name} • ${paymentMethod.name}"
-                                    category != null -> category.name
-                                    paymentMethod != null -> paymentMethod.name
-                                    else -> base.title
-                                }
-
-                                base.copy(title = title)
-                            },
+                            averageTicket = averageTicket,
+                            salesCount = salesCount,
+                            isCashOpenForTooLong = isTooLong,
                             quickActions = quickActions,
                             currentCashId = cashSession.id
                         )
