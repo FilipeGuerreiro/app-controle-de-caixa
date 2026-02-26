@@ -30,7 +30,7 @@ jobs:
       # Este passo compila o binário do iOS.
       # No KMP, isso geralmente cria o framework necessário para o Xcode.
       - name: Build iOS Framework (Device)
-        run: ./gradlew :composeApp:buildReleaseXCFramework --stacktrace --info --no-daemon -Dorg.gradle.configuration-cache=false
+        run: ./gradlew :composeApp:buildReleaseXCFramework -Pkotlin.native.cacheKind=none --max-workers=1 --stacktrace --info --no-daemon -Dorg.gradle.configuration-cache=false
 
       - name: Archive iOS app (unsigned)
         run: |
