@@ -63,6 +63,8 @@ val appModule = module {
     factory { filipe.guerreiro.domain.usecase.UpdateTransactionUseCase(get(), get()) }
     factory { filipe.guerreiro.domain.usecase.DeleteTransactionUseCase(get(), get()) }
     factory { filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase(get()) }
+    factory { filipe.guerreiro.domain.usecase.GenerateCsvUseCase() }
+    single { filipe.guerreiro.domain.service.ShareManager() }
 
 
     // Session Manager - singleton para gerenciar estado de autenticação
@@ -85,7 +87,7 @@ val appModule = module {
     }
 
     viewModel {
-        (cashId: Long) -> CashDetailViewModel(cashId, get(), get(), get(), get(), get(), get(), get())
+        (cashId: Long) -> CashDetailViewModel(cashId, get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
 
     viewModel {

@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.datetime.TimeZone
 
 data class CashDetailUiState(
     val session: CashSessionUi? = null,
@@ -37,6 +40,7 @@ data class CashDetailUiState(
     val rawTransactions: List<filipe.guerreiro.domain.model.Transaction> = emptyList(),
     val showAuditFrictionDialog: Boolean = false,
     val pendingTransactionAction: PendingTransactionAction? = null,
+    val isExporting: Boolean = false,
     val isLoading: Boolean = true
 )
 
@@ -102,7 +106,9 @@ class CashDetailViewModel(
     private val paymentMethodRepository: filipe.guerreiro.domain.repository.PaymentMethodRepository,
     private val updateTransactionUseCase: filipe.guerreiro.domain.usecase.UpdateTransactionUseCase,
     private val deleteTransactionUseCase: filipe.guerreiro.domain.usecase.DeleteTransactionUseCase,
-    private val getSessionAuditLogsUseCase: filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase
+    private val getSessionAuditLogsUseCase: filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase,
+    private val generateCsvUseCase: filipe.guerreiro.domain.usecase.GenerateCsvUseCase,
+    private val shareManager: filipe.guerreiro.domain.service.ShareManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CashDetailUiState(isLoading = true))
@@ -145,7 +151,7 @@ class CashDetailViewModel(
                             val title = listOfNotNull(category?.name, paymentMethod?.name).joinToString(" • ")
 
                             val isIncome = tx.type.name == filipe.guerreiro.domain.model.TransactionType.INCOME.name
-                            val local = tx.timestamp.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+                            val local = tx.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
                             val formattedTime = "${local.day}/${local.month.number}/${local.year} ${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
                             val dateFull = "${local.day.toString().padStart(2, '0')}/${local.month.number.toString().padStart(2, '0')}/${local.year} às ${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
 
@@ -178,81 +184,51 @@ class CashDetailViewModel(
                         val items = mappedTransactions.map { it.first }
                         val detailsMap = mappedTransactions.associate { it.second.id to it.second }
 
-                            // Mocked data for Category Balances
-                            val mockCategoryBalances = listOf(
-                                BreakdownItemUi(
-                                    name = "Refrigerante",
-                                    amountFormatted = "R$ 200,00",
-                                    amountValue = 20000,
-                                    isIncome = true,
-                                    progress = 0.66f
-                                ),
-                                BreakdownItemUi(
-                                    name = "Espetinho",
-                                    amountFormatted = "R$ 100,00",
-                                    amountValue = 10000,
-                                    isIncome = true,
-                                    progress = 0.33f
-                                ),
-                                BreakdownItemUi(
-                                    name = "Carvão",
-                                    amountFormatted = "R$ 50,00",
-                                    amountValue = 5000,
-                                    isIncome = false,
-                                    progress = 0.33f
-                                ),
-                                BreakdownItemUi(
-                                    name = "Bebidas (Fornecedor)",
-                                    amountFormatted = "R$ 100,00",
-                                    amountValue = 10000,
-                                    isIncome = false,
-                                    progress = 0.66f
-                                )
-                            )
-
-                            // Mocked data for Payment Method Balances
-                            val mockPaymentMethodBalances = listOf(
-                                BreakdownItemUi(
-                                    name = "Dinheiro",
-                                    amountFormatted = "R$ 150,00",
-                                    amountValue = 15000,
-                                    isIncome = true,
-                                    progress = 0.50f
-                                ),
-                                BreakdownItemUi(
-                                    name = "PIX",
-                                    amountFormatted = "R$ 100,00",
-                                    amountValue = 10000,
-                                    isIncome = true,
-                                    progress = 0.33f
-                                ),
-                                BreakdownItemUi(
-                                    name = "Cartão de Crédito",
-                                    amountFormatted = "R$ 50,00",
-                                    amountValue = 5000,
-                                    isIncome = true,
-                                    progress = 0.17f
-                                ),
-                                BreakdownItemUi(
-                                    name = "Dinheiro",
-                                    amountFormatted = "R$ 100,00",
-                                    amountValue = 10000,
-                                    isIncome = false,
-                                    progress = 0.66f
-                                ),
-                                BreakdownItemUi(
-                                    name = "PIX",
-                                    amountFormatted = "R$ 50,00",
-                                    amountValue = 5000,
-                                    isIncome = false,
-                                    progress = 0.33f
-                                )
-                            )
-
                             val summaryUi = balance.toSummaryUi(session.status, session.openingTimeStamp, session.closingTimeStamp).copy(
                                 dailyGoalAmount = session.dailyGoalAmount,
                                 isLatestSession = latestSession?.id == session.id
                             )
+
+                            val totalInflow = summaryUi.totalInflowValue
+                            val totalOutflow = summaryUi.totalOutflowValue
+
+                            val realCategoryBalances = transactions.groupBy { Pair(it.categoryId, it.type) }
+                                .map { (key, txs) ->
+                                    val (categoryId, type) = key
+                                    val isIncome = type.name == filipe.guerreiro.domain.model.TransactionType.INCOME.name
+                                    val totalAmount = txs.sumOf { it.amount }
+                                    val categoryName = categories.find { it.id == categoryId }?.name ?: "Sem Categoria"
+                                    
+                                    val totalOfType = if (isIncome) totalInflow else totalOutflow
+                                    val progress = if (totalOfType > 0) totalAmount.toFloat() / totalOfType.toFloat() else 0f
+
+                                    BreakdownItemUi(
+                                        name = categoryName,
+                                        amountFormatted = totalAmount.toCurrencyString(),
+                                        amountValue = totalAmount,
+                                        isIncome = isIncome,
+                                        progress = progress
+                                    )
+                                }.sortedByDescending { it.amountValue }
+
+                            val realPaymentMethodBalances = transactions.groupBy { Pair(it.paymentMethodId, it.type) }
+                                .map { (key, txs) ->
+                                    val (paymentMethodId, type) = key
+                                    val isIncome = type.name == filipe.guerreiro.domain.model.TransactionType.INCOME.name
+                                    val totalAmount = txs.sumOf { it.amount }
+                                    val paymentMethodName = paymentMethods.find { it.id == paymentMethodId }?.name ?: "Sem Método"
+                                    
+                                    val totalOfType = if (isIncome) totalInflow else totalOutflow
+                                    val progress = if (totalOfType > 0) totalAmount.toFloat() / totalOfType.toFloat() else 0f
+
+                                    BreakdownItemUi(
+                                        name = paymentMethodName,
+                                        amountFormatted = totalAmount.toCurrencyString(),
+                                        amountValue = totalAmount,
+                                        isIncome = isIncome,
+                                        progress = progress
+                                    )
+                                }.sortedByDescending { it.amountValue }
 
                             // Populate Goals list dynamically
                             val dynamicGoals = mutableListOf<GoalUi>()
@@ -272,14 +248,13 @@ class CashDetailViewModel(
                                 )
                             }
 
-                            // TODO: Later on we can add other goals here
 
                             CashDetailUiState(
                                 session = session.toUiModel(),
                                 summary = summaryUi,
                                 historyItems = items,
-                                categoryBalances = mockCategoryBalances,
-                                paymentMethodBalances = mockPaymentMethodBalances,
+                                categoryBalances = realCategoryBalances,
+                                paymentMethodBalances = realPaymentMethodBalances,
                                 goals = dynamicGoals,
                                 transactionDetails = detailsMap,
                                 selectedTransaction = _uiState.value.selectedTransaction,
@@ -287,6 +262,7 @@ class CashDetailViewModel(
                                 rawTransactions = transactions,
                                 showAuditFrictionDialog = _uiState.value.showAuditFrictionDialog,
                                 pendingTransactionAction = _uiState.value.pendingTransactionAction,
+                                isExporting = _uiState.value.isExporting,
                                 isLoading = false
                             )
                         }
@@ -390,5 +366,38 @@ class CashDetailViewModel(
             showAuditFrictionDialog = false,
             pendingTransactionAction = null
         )
+    }
+
+    fun exportToCsv() {
+        val currentState = _uiState.value
+        val sessionUi = currentState.session ?: return
+        
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isExporting = true)
+            
+            try {
+                // Fetch the raw models
+                val session = cashRepository.getSessionById(cashId).firstOrNull()
+                if (session != null) {
+                    val csvText = generateCsvUseCase(
+                        session = session,
+                        transactions = currentState.rawTransactions,
+                        categories = categoryRepository.getCategories(session.userId).first(),
+                        paymentMethods = paymentMethodRepository.getPaymentMethods(session.userId).first(),
+                        totalInflow = currentState.summary.totalInflowValue,
+                        totalOutflow = currentState.summary.totalOutflowValue,
+                        currentBalance = currentState.summary.currentBalanceValue
+                    )
+                    
+                    val filename = "relatorio_caixa_${session.id}_${session.openingTimeStamp.toLocalDateTime(
+                        TimeZone.currentSystemDefault())}.csv"
+                    shareManager.shareCsvFile(filename, csvText)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _uiState.value = _uiState.value.copy(isExporting = false)
+            }
+        }
     }
 }

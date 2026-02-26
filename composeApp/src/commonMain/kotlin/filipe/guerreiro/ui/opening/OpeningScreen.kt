@@ -79,6 +79,7 @@ fun OpeningScreen(
         state = state,
         onBackClick = onBackClick,
         onAmountChange = viewModel::onAmountChange,
+        onToggleAmountSign = viewModel::toggleAmountSign,
         onDailyGoalChange = viewModel::onDailyGoalChange,
         onSuggestedAmountClick = viewModel::resetToSuggestedAmount,
         onOpenSession = viewModel::openSession
@@ -91,6 +92,7 @@ fun OpeningScreenContent(
     state: OpeningUiState,
     onBackClick: () -> Unit,
     onAmountChange: (String) -> Unit,
+    onToggleAmountSign: () -> Unit,
     onDailyGoalChange: (String) -> Unit,
     onSuggestedAmountClick: () -> Unit,
     onOpenSession: () -> Unit,
@@ -210,10 +212,11 @@ fun OpeningScreenContent(
                         modifier = Modifier.fillMaxWidth(),
                         prefix = {
                             Text(
-                                text = "R$ ",
+                                text = if (state.isAmountNegative) "-R$ " else "R$ ",
                                 style = currencyTextStyle.copy(
-                                    color = MaterialTheme.financial.profit
-                                )
+                                    color = if (state.isAmountNegative) MaterialTheme.colorScheme.error else MaterialTheme.financial.profit
+                                ),
+                                modifier = Modifier.padding(end = 4.dp, top = 2.dp, bottom = 2.dp)
                             )
                         },
                         textStyle = currencyTextStyle,
@@ -224,6 +227,26 @@ fun OpeningScreenContent(
                         ),
                         singleLine = true
                     )
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Aberto com saldo negativo",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                        androidx.compose.material3.Switch(
+                            checked = state.isAmountNegative,
+                            onCheckedChange = { onToggleAmountSign() }
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -266,8 +289,8 @@ fun OpeningScreenContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card de sugestão (se houver valor sugerido)
-            if (state.suggestedAmount > 0) {
+            // Card de sugestão (se houver valor sugerido diferente de 0)
+            if (state.suggestedAmount != 0L) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -410,6 +433,7 @@ fun OpeningScreenPreview() {
             ),
             onBackClick = {},
             onAmountChange = {},
+            onToggleAmountSign = {},
             onDailyGoalChange = {},
             onSuggestedAmountClick = {},
             onOpenSession = {}
@@ -428,6 +452,7 @@ fun OpeningScreenLoadingPreview() {
             ),
             onBackClick = {},
             onAmountChange = {},
+            onToggleAmountSign = {},
             onDailyGoalChange = {},
             onSuggestedAmountClick = {},
             onOpenSession = {}

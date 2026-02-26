@@ -4,6 +4,7 @@ data class OpeningUiState(
     val suggestedAmount: Long = 0L,
     val displayAmount: String = "0,00",
     val amountInCents: Long = 0L,
+    val isAmountNegative: Boolean = false,
     val displayDailyGoal: String = "0,00",
     val dailyGoalInCents: Long = 0L,
     val isLoading: Boolean = false,

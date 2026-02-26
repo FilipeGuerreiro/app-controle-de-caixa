@@ -20,12 +20,14 @@ fun Long.toCurrencyString(): String {
 }
 
 fun Long.toCurrencyStringWithoutPrefix(): String {
+    val negative = this < 0
     val absValue = abs(this)
     val reais = absValue / 100
     val cents = absValue % 100
     val centsStr = cents.toString().padStart(2, '0')
     val reaisStr = reais.formatWithThousandsSeparator()
-    return "$reaisStr,$centsStr"
+    val prefix = if (negative) "-" else ""
+    return "$prefix$reaisStr,$centsStr"
 }
 
 private fun Long.formatWithThousandsSeparator(): String {

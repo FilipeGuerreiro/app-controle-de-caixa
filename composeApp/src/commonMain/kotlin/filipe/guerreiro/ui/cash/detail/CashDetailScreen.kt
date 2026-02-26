@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import filipe.guerreiro.domain.model.Transaction
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,7 +118,8 @@ fun CashDetailScreen(
                                 categoryBalances = uiState.categoryBalances,
                                 paymentMethodBalances = uiState.paymentMethodBalances,
                                 onManageCategories = onNavigateToCategories,
-                                onManagePaymentMethods = onNavigateToPaymentMethods
+                                onManagePaymentMethods = onNavigateToPaymentMethods,
+                                onAddTransaction = onNavigateToTransaction
                             )
                         }
                         DetailSection.HISTORY -> {
@@ -140,7 +139,10 @@ fun CashDetailScreen(
                             )
                         }
                         DetailSection.EXPORT -> {
-                            ReportsSection()
+                            ReportsSection(
+                                isExporting = uiState.isExporting,
+                                onExportCsvClick = { viewModel.exportToCsv() }
+                            )
                         }
                     }
                 }

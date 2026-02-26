@@ -50,6 +50,7 @@ class OpeningViewModel(
                 suggestedAmount = suggested ?: 0L,
                 displayAmount = input.amountInCents.toCurrencyStringWithoutPrefix(),
                 amountInCents = input.amountInCents,
+                isAmountNegative = input.isAmountNegative,
                 displayDailyGoal = input.dailyGoalInCents.toCurrencyStringWithoutPrefix(),
                 dailyGoalInCents = input.dailyGoalInCents,
                 isLoading = loading,
@@ -80,7 +81,8 @@ class OpeningViewModel(
             // Pré-preenche o input com o valor sugerido e a meta padrão
             inputState.update {
                 it.copy(
-                    amountInCents = if (suggested > 0) suggested else 0L,
+                    amountInCents = kotlin.math.abs(suggested),
+                    isAmountNegative = suggested < 0,
                     dailyGoalInCents = defaultGoal
                 )
             }
@@ -96,9 +98,19 @@ class OpeningViewModel(
     fun onAmountChange(newText: String) {
         val digitsOnly = newText.filter { it.isDigit() }
         val cents = digitsOnly.toLongOrNull() ?: 0L
-        val capped = cents.coerceIn(0L, 99999999L) // Max R$ 999.999,99
+        val absoluteCapped = cents.coerceAtMost(99999999L) // Max R$ 999.999,99
+        
         inputState.update {
-            it.copy(amountInCents = capped, errorMessage = null)
+            it.copy(amountInCents = absoluteCapped, errorMessage = null)
+        }
+    }
+
+    /**
+     * Alterna explicitamente o sinal (positivo/negativo) do valor inicial.
+     */
+    fun toggleAmountSign() {
+        inputState.update {
+            it.copy(isAmountNegative = !it.isAmountNegative)
         }
     }
 
@@ -117,13 +129,14 @@ class OpeningViewModel(
 
     fun openSession() {
         val user = sessionManager.currentUser.value ?: return
-        val amountInCents = uiState.value.amountInCents
+        val rawAmount = uiState.value.amountInCents
+        val finalAmountInCents = if (uiState.value.isAmountNegative) -rawAmount else rawAmount
         val dailyGoalInCents = uiState.value.dailyGoalInCents
 
         viewModelScope.launch {
             try {
                 sessionPreferences.setDefaultDailyGoal(dailyGoalInCents)
-                val newSessionId = repository.createSession(amountInCents, user.id, if (dailyGoalInCents > 0) dailyGoalInCents else null)
+                val newSessionId = repository.createSession(finalAmountInCents, user.id, if (dailyGoalInCents > 0) dailyGoalInCents else null)
                 openedSessionIdState.value = newSessionId
                 isSessionOpenedState.value = true
             } catch (e: Exception) {
@@ -137,7 +150,10 @@ class OpeningViewModel(
     fun resetToSuggestedAmount() {
         val suggested = suggestedAmountState.value ?: return
         inputState.update {
-            it.copy(amountInCents = suggested)
+            it.copy(
+                amountInCents = kotlin.math.abs(suggested),
+                isAmountNegative = suggested < 0
+            )
         }
     }
 }

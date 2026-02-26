@@ -32,7 +32,9 @@ import androidx.compose.ui.unit.dp
 import filipe.guerreiro.ui.theme.financial
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.Icon
+import androidx.compose.ui.text.style.TextAlign
 
 // ----- Sub-tab enum -----
 
@@ -48,7 +50,8 @@ fun SummaryBreakdownSection(
     categoryBalances: List<BreakdownItemUi>,
     paymentMethodBalances: List<BreakdownItemUi>,
     onManageCategories: () -> Unit = {},
-    onManagePaymentMethods: () -> Unit = {}
+    onManagePaymentMethods: () -> Unit = {},
+    onAddTransaction: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(SummaryTab.CATEGORIES) }
 
@@ -117,13 +120,48 @@ fun SummaryBreakdownSection(
         }
 
         if (items.isEmpty()) {
-            Text(
-                text = "Nenhum dado disponível",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ReceiptLong,
+                        contentDescription = "Empty",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Nenhuma movimentação",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Adicione entradas ou saídas para ver o resumo financeiro.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    TextButton(onClick = onAddTransaction) {
+                        Text("Adicionar Transação")
+                    }
+                }
+            }
         } else {
             val incomes = items.filter { it.isIncome }.sortedByDescending { it.amountValue }
             val expenses = items.filter { !it.isIncome }.sortedByDescending { it.amountValue }

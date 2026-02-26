@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,38 +31,45 @@ data class ReportOptionUi(
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
-    val accentColor: Color
+    val accentColor: Color,
+    val onClick: (() -> Unit)? = null,
+    val isLoading: Boolean = false
 )
 
 // ----- Composables -----
 
 @Composable
-fun ReportsSection() {
+fun ReportsSection(
+    isExporting: Boolean,
+    onExportCsvClick: () -> Unit
+) {
     val options = listOf(
         ReportOptionUi(
-            title = "Exportar PDF",
-            subtitle = "Resumo completo do caixa em PDF",
-            icon = Icons.Default.PictureAsPdf,
-            accentColor = Color(0xFFE53935) // Red
-        ),
-        ReportOptionUi(
-            title = "Exportar Planilha",
-            subtitle = "Dados em formato CSV para Excel",
+            title = "Exportar Planilha (CSV)",
+            subtitle = "Dados detalhados do caixa",
             icon = Icons.Default.TableChart,
-            accentColor = Color(0xFF43A047) // Green
+            accentColor = Color(0xFF43A047), // Green
+            onClick = onExportCsvClick,
+            isLoading = isExporting
         ),
-        ReportOptionUi(
-            title = "Compartilhar Resumo",
-            subtitle = "Enviar resumo via WhatsApp ou e-mail",
-            icon = Icons.Default.Share,
-            accentColor = Color(0xFF1E88E5) // Blue
-        ),
-        ReportOptionUi(
-            title = "Imprimir Comprovante",
-            subtitle = "Impressão térmica do fechamento",
-            icon = Icons.Default.Print,
-            accentColor = Color(0xFF8E24AA) // Purple
-        )
+//        ReportOptionUi(
+//            title = "Exportar PDF",
+//            subtitle = "Disponível em breve",
+//            icon = Icons.Default.PictureAsPdf,
+//            accentColor = Color(0xFFE53935) // Red
+//        ),
+//        ReportOptionUi(
+//            title = "Compartilhar Resumo",
+//            subtitle = "Disponível em breve",
+//            icon = Icons.Default.Share,
+//            accentColor = Color(0xFF1E88E5) // Blue
+//        ),
+//        ReportOptionUi(
+//            title = "Imprimir Comprovante",
+//            subtitle = "Disponível em breve",
+//            icon = Icons.Default.Print,
+//            accentColor = Color(0xFF8E24AA) // Purple
+//        )
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -86,7 +90,7 @@ private fun ReportOptionCard(option: ReportOptionUi) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* placeholder click */ },
+            .clickable(enabled = option.onClick != null && !option.isLoading) { option.onClick?.invoke() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
@@ -133,13 +137,21 @@ private fun ReportOptionCard(option: ReportOptionUi) {
                 )
             }
 
-            // Arrow
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(20.dp)
-            )
+            // Arrow or Loading
+            if (option.isLoading) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = option.accentColor
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
