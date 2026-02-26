@@ -54,4 +54,16 @@ class TransactionRepositoryImpl(
             transactionDao.insertTransaction(transaction)
         }
     }
+
+    override suspend fun updateTransaction(transaction: Transaction) {
+        withContext(Dispatchers.IO) {
+            transactionDao.updateTransaction(transaction)
+        }
+    }
+
+    override suspend fun deleteTransaction(transaction: Transaction) {
+        withContext(Dispatchers.IO) {
+            transactionDao.softDeleteTransaction(transaction.id)
+        }
+    }
 }

@@ -23,10 +23,11 @@ import filipe.guerreiro.domain.model.User
         Transaction::class,
         Category::class,
         PaymentMethod::class,
-        User::class
+        User::class,
+        filipe.guerreiro.domain.model.AuditLog::class
                ],
-    version = 5,
-    exportSchema = true
+    version = 7,
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -36,4 +37,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun categoryDao(): CategoryDao
     abstract fun paymentMethodDao(): PaymentMethodDao
+    abstract fun auditLogDao(): filipe.guerreiro.data.local.dao.AuditLogDao
 }

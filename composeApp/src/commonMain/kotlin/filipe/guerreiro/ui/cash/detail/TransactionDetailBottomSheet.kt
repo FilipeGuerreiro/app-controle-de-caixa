@@ -26,13 +26,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import filipe.guerreiro.ui.theme.financial
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionDetailBottomSheet(
     transaction: TransactionDetailUi,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onEdit: (String) -> Unit,
+    onDelete: (String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
@@ -107,6 +111,37 @@ fun TransactionDetailBottomSheet(
                     value = transaction.description,
                     isDescription = true
                 )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly
+            ) {
+                androidx.compose.material3.TextButton(
+                    onClick = { onDelete(transaction.id) },
+                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(imageVector = androidx.compose.material.icons.Icons.Default.Delete, contentDescription = "Excluir", modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Excluir")
+                }
+                
+                androidx.compose.material3.Button(
+                    onClick = { onEdit(transaction.id) },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Icon(imageVector = androidx.compose.material.icons.Icons.Default.Edit, contentDescription = "Editar", modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Editar")
+                }
             }
         }
     }

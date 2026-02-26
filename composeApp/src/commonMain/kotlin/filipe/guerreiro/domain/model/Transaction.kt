@@ -26,7 +26,8 @@ data class Transaction(
     val amount: Long,
     val description: String,
     val type: TransactionType,
-    val timestamp: Instant
+    val timestamp: Instant,
+    val isDeleted: Boolean = false
 )
 
 enum class TransactionType { INCOME, EXPENSE }

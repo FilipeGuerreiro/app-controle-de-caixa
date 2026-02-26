@@ -36,4 +36,14 @@ class Converters {
     fun toCashStatusType(value: String): CashStatusType {
         return CashStatusType.valueOf(value)
     }
+
+    @TypeConverter
+    fun fromAuditActionType(value: AuditActionType): String {
+        return value.name
+    }
+
+    @TypeConverter
+    fun toAuditActionType(value: String): AuditActionType {
+        return AuditActionType.valueOf(value)
+    }
 }

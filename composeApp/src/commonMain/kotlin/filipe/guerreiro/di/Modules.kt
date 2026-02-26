@@ -49,6 +49,7 @@ val appModule = module {
     single { get<AppDatabase>().userDao() }
     single { get<AppDatabase>().paymentMethodDao() }
     single { get<AppDatabase>().categoryDao() }
+    single { get<AppDatabase>().auditLogDao() }
 
     // Repositorys
     single<CashRepository> { CashRepositoryImpl(get(), get()) }
@@ -56,6 +57,12 @@ val appModule = module {
     single<PaymentMethodRepository> { PaymentMethodRepositoryImpl(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get()) }
     single<TransactionRepository> { TransactionRepositoryImpl(get(), get()) }
+    single<filipe.guerreiro.domain.repository.AuditLogRepository> { filipe.guerreiro.data.local.AuditLogRepositoryImpl(get()) }
+
+    // Use Cases
+    factory { filipe.guerreiro.domain.usecase.UpdateTransactionUseCase(get(), get()) }
+    factory { filipe.guerreiro.domain.usecase.DeleteTransactionUseCase(get(), get()) }
+    factory { filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase(get()) }
 
 
     // Session Manager - singleton para gerenciar estado de autenticação
@@ -78,7 +85,7 @@ val appModule = module {
     }
 
     viewModel {
-        (cashId: Long) -> CashDetailViewModel(cashId, get(), get(), get(), get())
+        (cashId: Long) -> CashDetailViewModel(cashId, get(), get(), get(), get(), get(), get(), get())
     }
 
     viewModel {

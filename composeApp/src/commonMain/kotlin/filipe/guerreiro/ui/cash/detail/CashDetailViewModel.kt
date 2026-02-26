@@ -33,8 +33,17 @@ data class CashDetailUiState(
     val goals: List<GoalUi> = emptyList(),
     val transactionDetails: Map<String, TransactionDetailUi> = emptyMap(),
     val selectedTransaction: TransactionDetailUi? = null,
+    val auditLogs: List<filipe.guerreiro.domain.model.AuditLog> = emptyList(),
+    val rawTransactions: List<filipe.guerreiro.domain.model.Transaction> = emptyList(),
+    val showAuditFrictionDialog: Boolean = false,
+    val pendingTransactionAction: PendingTransactionAction? = null,
     val isLoading: Boolean = true
 )
+
+sealed class PendingTransactionAction {
+    data class Edit(val oldTransaction: filipe.guerreiro.domain.model.Transaction, val newTransaction: filipe.guerreiro.domain.model.Transaction) : PendingTransactionAction()
+    data class Delete(val transaction: filipe.guerreiro.domain.model.Transaction) : PendingTransactionAction()
+}
 
 data class CashSummaryUi(
     val initialAmount: String = "R$ 0,00",
@@ -90,7 +99,10 @@ class CashDetailViewModel(
     private val cashRepository: CashRepository,
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: filipe.guerreiro.domain.repository.CategoryRepository,
-    private val paymentMethodRepository: filipe.guerreiro.domain.repository.PaymentMethodRepository
+    private val paymentMethodRepository: filipe.guerreiro.domain.repository.PaymentMethodRepository,
+    private val updateTransactionUseCase: filipe.guerreiro.domain.usecase.UpdateTransactionUseCase,
+    private val deleteTransactionUseCase: filipe.guerreiro.domain.usecase.DeleteTransactionUseCase,
+    private val getSessionAuditLogsUseCase: filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CashDetailUiState(isLoading = true))
@@ -108,13 +120,25 @@ class CashDetailViewModel(
                     if (session == null) {
                         flowOf(_uiState.value.copy(isLoading = false))
                     } else {
-                        combine(
-                        transactionRepository.getAllTransactions(cashId),
-                        cashRepository.getSessionBalance(cashId),
-                        categoryRepository.getCategories(session.userId),
-                        paymentMethodRepository.getPaymentMethods(session.userId),
-                        cashRepository.getCurrentCashSession(session.userId)
-                    ) { transactions, balance, categories, paymentMethods, latestSession ->
+                        val flowA = combine(
+                            transactionRepository.getAllTransactions(cashId),
+                            cashRepository.getSessionBalance(cashId),
+                            categoryRepository.getCategories(session.userId)
+                        ) { txs, bal, cats -> Triple(txs, bal, cats) }
+
+                        val flowB = combine(
+                            paymentMethodRepository.getPaymentMethods(session.userId),
+                            cashRepository.getCurrentCashSession(session.userId),
+                            getSessionAuditLogsUseCase(cashId)
+                        ) { pms, latestSession, logs -> Triple(pms, latestSession, logs) }
+
+                        combine(flowA, flowB) { tripleA, tripleB ->
+                            val transactions = tripleA.first
+                            val balance = tripleA.second
+                            val categories = tripleA.third
+                            val paymentMethods = tripleB.first
+                            val latestSession = tripleB.second
+                            val auditLogs = tripleB.third
                         val mappedTransactions = transactions.map { tx ->
                             val category = categories.find { it.id == tx.categoryId }
                             val paymentMethod = paymentMethods.find { it.id == tx.paymentMethodId }
@@ -259,6 +283,10 @@ class CashDetailViewModel(
                                 goals = dynamicGoals,
                                 transactionDetails = detailsMap,
                                 selectedTransaction = _uiState.value.selectedTransaction,
+                                auditLogs = auditLogs,
+                                rawTransactions = transactions,
+                                showAuditFrictionDialog = _uiState.value.showAuditFrictionDialog,
+                                pendingTransactionAction = _uiState.value.pendingTransactionAction,
                                 isLoading = false
                             )
                         }
@@ -287,5 +315,80 @@ class CashDetailViewModel(
 
     fun clearSelectedTransaction() {
         _uiState.value = _uiState.value.copy(selectedTransaction = null)
+    }
+
+    fun requestTransactionDelete(transactionId: String) {
+        val uiStateValue = _uiState.value
+        val transaction = uiStateValue.rawTransactions.find { it.id.toString() == transactionId } ?: return
+        val isClosed = uiStateValue.session?.status == "Fechado"
+
+        if (isClosed) {
+            _uiState.value = uiStateValue.copy(
+                pendingTransactionAction = PendingTransactionAction.Delete(transaction),
+                showAuditFrictionDialog = true
+            )
+        } else {
+            viewModelScope.launch {
+                deleteTransactionUseCase(transaction, wasClosed = false, reason = null)
+                clearSelectedTransaction()
+            }
+        }
+    }
+
+    fun requestTransactionEdit(oldTransactionId: String, newAmount: Long, newCategoryId: Long, newDescription: String) {
+        val uiStateValue = _uiState.value
+        val oldTx = uiStateValue.rawTransactions.find { it.id.toString() == oldTransactionId } ?: return
+        val newTx = oldTx.copy(
+            amount = newAmount,
+            categoryId = newCategoryId,
+            description = newDescription
+        )
+        val isClosed = uiStateValue.session?.status == "Fechado"
+
+        if (isClosed) {
+            _uiState.value = uiStateValue.copy(
+                pendingTransactionAction = PendingTransactionAction.Edit(oldTx, newTx),
+                showAuditFrictionDialog = true
+            )
+        } else {
+            viewModelScope.launch {
+                updateTransactionUseCase(oldTx, newTx, wasClosed = false, reason = null)
+                // Transaction is updated without audit tracking
+            }
+        }
+    }
+
+    fun confirmAuditAction(reason: String) {
+        val state = _uiState.value
+        val action = state.pendingTransactionAction ?: return
+
+        viewModelScope.launch {
+            when (action) {
+                is PendingTransactionAction.Edit -> {
+                    updateTransactionUseCase(
+                        oldTransaction = action.oldTransaction,
+                        newTransaction = action.newTransaction,
+                        wasClosed = true,
+                        reason = reason
+                    )
+                }
+                is PendingTransactionAction.Delete -> {
+                    deleteTransactionUseCase(
+                        transaction = action.transaction,
+                        wasClosed = true,
+                        reason = reason
+                    )
+                    clearSelectedTransaction()
+                }
+            }
+            dismissAuditFrictionDialog()
+        }
+    }
+
+    fun dismissAuditFrictionDialog() {
+        _uiState.value = _uiState.value.copy(
+            showAuditFrictionDialog = false,
+            pendingTransactionAction = null
+        )
     }
 }
