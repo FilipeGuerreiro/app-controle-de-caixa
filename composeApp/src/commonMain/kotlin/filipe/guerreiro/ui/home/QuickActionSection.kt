@@ -16,7 +16,8 @@ import androidx.compose.ui.unit.dp
 fun QuickActionSection(
     actions: List<QuickActionUiModel>,
     onActionClick: (QuickActionUiModel) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isCashOpen: Boolean = true
 ) {
     Column(modifier = modifier) {
         Text(
@@ -41,6 +42,7 @@ fun QuickActionSection(
                         QuickActionCard(
                             item = action,
                             onClick = { onActionClick(action) },
+                            isEnabled = isCashOpen,
                             modifier = Modifier.weight(1f)
                         )
                     }

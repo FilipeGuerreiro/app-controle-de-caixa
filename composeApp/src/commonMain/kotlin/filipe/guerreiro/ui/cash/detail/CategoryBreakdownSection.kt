@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -17,7 +16,6 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,10 +29,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import filipe.guerreiro.ui.theme.financial
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.style.TextAlign
 
 // ----- Sub-tab enum -----
@@ -51,45 +48,15 @@ fun SummaryBreakdownSection(
     categoryBalances: List<BreakdownItemUi>,
     paymentMethodBalances: List<BreakdownItemUi>,
     isOpen: Boolean = false,
-    onManageCategories: () -> Unit = {},
-    onManagePaymentMethods: () -> Unit = {},
     onAddTransaction: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(SummaryTab.CATEGORIES) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Resumos",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-            )
-            TextButton(
-                onClick = {
-                    when (selectedTab) {
-                        SummaryTab.CATEGORIES -> onManageCategories()
-                        SummaryTab.PAYMENT_METHODS -> onManagePaymentMethods()
-                    }
-                }
-            ) {
-                Text(
-                    text = "Gerenciar",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-
+        Text(
+            text = "Resumos",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+        )
         // Toggle chips
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

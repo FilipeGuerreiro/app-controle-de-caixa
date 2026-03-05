@@ -32,17 +32,15 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import filipe.guerreiro.domain.model.Category
 import filipe.guerreiro.domain.model.TransactionType
+import filipe.guerreiro.ui.components.ControleDeCaixaTextField
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,27 +212,14 @@ fun AddCategoryDialog(
 ) {
     val typeName = if (type == TransactionType.INCOME) "entrada" else "saída"
 
-    var textFieldValue by remember {
-        mutableStateOf(TextFieldValue(text = name, selection = TextRange(name.length)))
-    }
-
-    LaunchedEffect(name) {
-        if (name != textFieldValue.text) {
-            textFieldValue = TextFieldValue(text = name, selection = TextRange(name.length))
-        }
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nova Categoria de $typeName") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = textFieldValue,
-                    onValueChange = { 
-                        textFieldValue = it
-                        onNameChange(it.text)
-                    },
+                ControleDeCaixaTextField(
+                    value = name,
+                    onValueChange = onNameChange,
                     label = { Text("Nome da categoria") },
                     singleLine = true,
                     isError = errorMessage != null,
@@ -276,27 +261,14 @@ fun EditCategoryDialog(
 ) {
     val typeName = if (type == TransactionType.INCOME) "entrada" else "saída"
 
-    var textFieldValue by remember {
-        mutableStateOf(TextFieldValue(text = name, selection = TextRange(name.length)))
-    }
-
-    LaunchedEffect(name) {
-        if (name != textFieldValue.text) {
-            textFieldValue = TextFieldValue(text = name, selection = TextRange(name.length))
-        }
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Editar Categoria de $typeName") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = textFieldValue,
-                    onValueChange = { 
-                        textFieldValue = it
-                        onNameChange(it.text)
-                    },
+                ControleDeCaixaTextField(
+                    value = name,
+                    onValueChange = onNameChange,
                     label = { Text("Nome da categoria") },
                     singleLine = true,
                     isError = errorMessage != null,

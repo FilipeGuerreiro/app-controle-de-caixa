@@ -244,7 +244,8 @@ fun ClosingSummaryCard(
                     color = MaterialTheme.financial.profit,
                     icon = Icons.Default.ArrowUpward,
                     bgColor = MaterialTheme.financial.profitContainer,
-                    state.isLoading
+                    isLoading = state.isLoading,
+                    prefix = "+"
                 )
                 
                 FlowItem(
@@ -253,7 +254,8 @@ fun ClosingSummaryCard(
                     color = MaterialTheme.colorScheme.error,
                     icon = Icons.Default.ArrowDownward,
                     bgColor = MaterialTheme.colorScheme.errorContainer,
-                    state.isLoading
+                    isLoading = state.isLoading,
+                    prefix = "-"
                 )
             }
         }
@@ -267,7 +269,8 @@ fun FlowItem(
     color: Color,
     icon: ImageVector,
     bgColor: Color,
-    isLoading: Boolean
+    isLoading: Boolean,
+    prefix: String
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
@@ -294,9 +297,8 @@ fun FlowItem(
             Row(
                 horizontalArrangement = Arrangement.Center
             ) {
-                val textValue = if (value >= 0) "+" else "-"
                 Text(
-                    text = textValue,
+                    text = prefix,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = color

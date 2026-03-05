@@ -31,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import filipe.guerreiro.domain.model.TransactionType
+import filipe.guerreiro.ui.components.ControleDeCaixaTextField
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -286,7 +286,7 @@ fun CustomItemDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            OutlinedTextField(
+            ControleDeCaixaTextField(
                 value = name,
                 onValueChange = onNameChange,
                 label = { Text("Nome") },
@@ -295,7 +295,6 @@ fun CustomItemDialog(
                 supportingText = errorMessage?.let {
                     { Text(it) }
                 },
-                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
         },

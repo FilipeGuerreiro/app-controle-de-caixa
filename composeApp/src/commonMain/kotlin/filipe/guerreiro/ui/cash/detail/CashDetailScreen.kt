@@ -31,8 +31,6 @@ fun CashDetailScreen(
     cashId: Long,
     onBackClick: () -> Unit,
     onNavigateToTransaction: () -> Unit,
-    onNavigateToCategories: () -> Unit,
-    onNavigateToPaymentMethods: () -> Unit,
     onOpenCashClick: () -> Unit,
     onCloseCashClick: () -> Unit
 ) {
@@ -118,8 +116,6 @@ fun CashDetailScreen(
                                 categoryBalances = uiState.categoryBalances,
                                 paymentMethodBalances = uiState.paymentMethodBalances,
                                 isOpen = uiState.summary.status == "Aberto",
-                                onManageCategories = onNavigateToCategories,
-                                onManagePaymentMethods = onNavigateToPaymentMethods,
                                 onAddTransaction = onNavigateToTransaction
                             )
                         }

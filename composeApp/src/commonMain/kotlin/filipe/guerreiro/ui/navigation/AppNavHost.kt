@@ -293,8 +293,6 @@ fun AppNavHost(
                 cashId = route.cashId.toLong(),
                 onBackClick = { navController.popBackStack() },
                 onNavigateToTransaction = { navController.navigate("transaction") },
-                onNavigateToCategories = { navController.navigate("categories") },
-                onNavigateToPaymentMethods = { navController.navigate("paymentMethods") },
                 onOpenCashClick = { navController.navigate("opening") },
                 onCloseCashClick = { navController.navigate("closing") }
             )
@@ -376,7 +374,9 @@ fun AppNavHost(
         ) {
             TransactionScreen(
                 onBackClick = { navController.popBackStack() },
-                onTransactionSaved = { navController.popBackStack() }
+                onTransactionSaved = { navController.popBackStack() },
+                onNavigateToCategories = { navController.navigate("categories") },
+                onNavigateToPaymentMethods = { navController.navigate("paymentMethods") }
             )
         }
     }

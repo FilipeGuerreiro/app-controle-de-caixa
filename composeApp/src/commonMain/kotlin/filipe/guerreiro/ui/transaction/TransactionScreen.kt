@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -35,6 +36,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +80,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun TransactionScreen(
     onBackClick: () -> Unit,
     onTransactionSaved: () -> Unit,
+    onNavigateToCategories: () -> Unit = {},
+    onNavigateToPaymentMethods: () -> Unit = {},
     viewModel: TransactionViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -97,7 +101,9 @@ fun TransactionScreen(
         onDescriptionChange = viewModel::onDescriptionChange,
         onTypeChange = viewModel::onTypeChange,
         onCategorySelected = viewModel::onCategorySelected,
-        onPaymentMethodSelected = viewModel::onPaymentMethodSelected
+        onPaymentMethodSelected = viewModel::onPaymentMethodSelected,
+        onNavigateToCategories = onNavigateToCategories,
+        onNavigateToPaymentMethods = onNavigateToPaymentMethods
     )
 }
 
@@ -111,7 +117,9 @@ fun TransactionContent(
     onDescriptionChange: (String) -> Unit,
     onTypeChange: (TransactionType) -> Unit,
     onCategorySelected: (Category) -> Unit,
-    onPaymentMethodSelected: (PaymentMethod) -> Unit
+    onPaymentMethodSelected: (PaymentMethod) -> Unit,
+    onNavigateToCategories: () -> Unit = {},
+    onNavigateToPaymentMethods: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -223,7 +231,9 @@ fun TransactionContent(
                     onOptionSelected = onCategorySelected,
                     itemLabel = { it.name },
                     isError = isCategoryError,
-                    supportingText = if (isCategoryError) "Selecione uma categoria" else null
+                    supportingText = if (isCategoryError) "Selecione uma categoria" else null,
+                    onManage = onNavigateToCategories,
+                    manageLabel = "Gerenciar categorias"
                 )
 
                 // Payment Method Selection
@@ -236,7 +246,9 @@ fun TransactionContent(
                     onOptionSelected = onPaymentMethodSelected,
                     itemLabel = { it.name },
                     isError = isPaymentError,
-                    supportingText = if (isPaymentError) "Selecione um método de pagamento" else null
+                    supportingText = if (isPaymentError) "Selecione um método de pagamento" else null,
+                    onManage = onNavigateToPaymentMethods,
+                    manageLabel = "Gerenciar métodos de pagamento"
                 )
             }
 
@@ -431,7 +443,9 @@ fun <T> DropdownSelector(
     onOptionSelected: (T) -> Unit,
     itemLabel: (T) -> String,
     isError: Boolean = false,
-    supportingText: String? = null
+    supportingText: String? = null,
+    onManage: (() -> Unit)? = null,
+    manageLabel: String = "Gerenciar"
 ) {
     var expanded by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
@@ -446,9 +460,9 @@ fun <T> DropdownSelector(
                 leadingIcon = { Icon(icon, contentDescription = null) },
                 trailingIcon = {
                     Icon(
-                        Icons.Default.ArrowDropDown, 
+                        Icons.Default.ArrowDropDown,
                         null,
-                        modifier = Modifier.clickable { expanded = !expanded } // Handle click on icon too
+                        modifier = Modifier.clickable { expanded = !expanded }
                             .rotate(rotationState)
                     )
                 },
@@ -467,7 +481,7 @@ fun <T> DropdownSelector(
                     disabledContainerColor = Color.Transparent
                 )
             )
-            
+
             if (isError && supportingText != null) {
                 Text(
                     text = supportingText,
@@ -477,7 +491,7 @@ fun <T> DropdownSelector(
                 )
             }
         }
-        
+
         // Transparent overlay to capture clicks
         Box(
             modifier = Modifier
@@ -489,7 +503,7 @@ fun <T> DropdownSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth(0.85f) // Adjust width relative to parent if possible, or just default
+            modifier = Modifier.fillMaxWidth(0.85f)
         ) {
             if (options.isEmpty()) {
                 DropdownMenuItem(
@@ -499,11 +513,11 @@ fun <T> DropdownSelector(
             } else {
                 options.forEach { option ->
                     DropdownMenuItem(
-                        text = { 
+                        text = {
                             Text(
                                 text = itemLabel(option),
                                 style = MaterialTheme.typography.bodyLarge
-                            ) 
+                            )
                         },
                         onClick = {
                             onOptionSelected(option)
@@ -511,6 +525,32 @@ fun <T> DropdownSelector(
                         }
                     )
                 }
+            }
+
+            // Always-visible manage shortcut
+            if (onManage != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = manageLabel,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onManage()
+                    }
+                )
             }
         }
     }

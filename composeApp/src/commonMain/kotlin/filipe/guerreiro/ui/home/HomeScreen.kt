@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,8 +33,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,6 +69,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedQuickAction by remember { mutableStateOf<QuickActionUiModel?>(null) }
+    var showCashClosedWarning by remember { mutableStateOf(false) }
 
     // Redireciona para seleção de usuário se não estiver logado
     LaunchedEffect(uiState.isLoggedIn) {
@@ -119,8 +121,13 @@ fun HomeScreen(
         } else if (uiState.quickActions.isNotEmpty()) {
             QuickActionSection(
                 actions = uiState.quickActions,
+                isCashOpen = uiState.isCashOpen,
                 onActionClick = { action ->
-                    selectedQuickAction = action
+                    if (uiState.isCashOpen) {
+                        selectedQuickAction = action
+                    } else {
+                        showCashClosedWarning = true
+                    }
                 }
             )
         }
@@ -164,6 +171,40 @@ fun HomeScreen(
                         selectedQuickAction = null
                     }
                 )
+            }
+        )
+    }
+
+    if (showCashClosedWarning) {
+        AlertDialog(
+            onDismissRequest = { showCashClosedWarning = false },
+            title = {
+                Text(
+                    text = "Caixa Fechado",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = {
+                Text(
+                    text = "Você precisa abrir o caixa atual para realizar lançamentos em ações rápidas.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCashClosedWarning = false
+                        onOpenCashClick()
+                    }
+                ) {
+                    Text("Abrir Caixa")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCashClosedWarning = false }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
@@ -737,7 +778,7 @@ fun PerformanceInsightsSection(averageTicket: String, salesCount: Int) {
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Qtd. de Vendas",
+                        text = "Qtd. de Entradas",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

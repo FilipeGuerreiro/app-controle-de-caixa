@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -46,10 +45,13 @@ import filipe.guerreiro.ui.theme.financial
 fun QuickActionCard(
     item: QuickActionUiModel,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isEnabled: Boolean = true
 ){
     val isIncome = item.type == TransactionType.INCOME
-    val color = if (isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
+    val baseColor = if (isIncome) MaterialTheme.financial.profit else MaterialTheme.colorScheme.error
+    val color = if (isEnabled) baseColor else baseColor.copy(alpha = 0.38f)
+    val contentColor = if (isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     val icon = getIconForPaymentMethod(item.paymentMethodName)
 
     OutlinedCard(
@@ -78,7 +80,7 @@ fun QuickActionCard(
                     modifier = Modifier
                         .size(32.dp)
                         .background(
-                            color = color.copy(alpha = 0.1f),
+                            color = color.copy(alpha = if (isEnabled) 0.1f else 0.05f),
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -98,7 +100,7 @@ fun QuickActionCard(
                     color = color,
                     modifier = Modifier
                         .background(
-                            color = color.copy(alpha = 0.1f),
+                            color = color.copy(alpha = if (isEnabled) 0.1f else 0.05f),
                             shape = RoundedCornerShape(4.dp)
                         )
                         .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -112,6 +114,7 @@ fun QuickActionCard(
                 Text(
                     text = item.categoryName,
                     style = MaterialTheme.typography.titleSmall,
+                    color = contentColor,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -119,7 +122,7 @@ fun QuickActionCard(
                 Text(
                     text = item.paymentMethodName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
