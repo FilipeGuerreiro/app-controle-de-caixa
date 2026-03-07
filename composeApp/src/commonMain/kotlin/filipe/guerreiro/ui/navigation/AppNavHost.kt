@@ -34,6 +34,7 @@ import filipe.guerreiro.ui.onboarding.OnboardingPaymentMethodsScreen
 import filipe.guerreiro.ui.onboarding.OnboardingCompleteScreen
 import filipe.guerreiro.ui.onboarding.OnboardingViewModel
 import filipe.guerreiro.ui.auth.AuthTestScreen
+import filipe.guerreiro.ui.backup.BackupTestScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 // Constantes de duração (Material Motion specs)
@@ -405,6 +406,18 @@ fun AppNavHost(
             popExitTransition = { slideOutToRight() },
         ) {
             AuthTestScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "backupTest",
+            enterTransition = { slideInFromRight() },
+            exitTransition = { slideOutToLeft() },
+            popEnterTransition = { slideInFromLeft() },
+            popExitTransition = { slideOutToRight() },
+        ) {
+            BackupTestScreen(
                 onBackClick = { navController.popBackStack() }
             )
         }

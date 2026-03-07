@@ -6,12 +6,14 @@ import filipe.guerreiro.data.AndroidUserPreferences
 import filipe.guerreiro.data.SessionPreferences
 import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
+import filipe.guerreiro.domain.service.backup.AndroidDatabaseFileManager
+import filipe.guerreiro.domain.service.backup.DatabaseFileManager
 import filipe.guerreiro.session.AndroidSessionPreferences
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val androidDatabaseModule = module {
-    single<RoomDatabase.Builder<AppDatabase>> {
+    factory<RoomDatabase.Builder<AppDatabase>> {
         val context = androidContext()
         val dbFile = context.getDatabasePath("caixa.db")
         Room.databaseBuilder<AppDatabase>(
@@ -36,5 +38,9 @@ val androidModule = module {
 
     single<SessionPreferences> {
         AndroidSessionPreferences(get())
+    }
+
+    single<DatabaseFileManager> {
+        AndroidDatabaseFileManager(androidContext())
     }
 }

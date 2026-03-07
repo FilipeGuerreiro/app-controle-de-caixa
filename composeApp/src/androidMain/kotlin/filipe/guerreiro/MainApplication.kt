@@ -3,6 +3,7 @@ package filipe.guerreiro
 import android.app.Application
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.di.appModule
+import filipe.guerreiro.di.databaseDependenciesModule
 import filipe.guerreiro.domain.session.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class MainApplication : Application() {
             androidContext(this@MainApplication)
             modules(
                 appModule, // CommonModule
+                databaseDependenciesModule,
                 androidDatabaseModule,
                 androidModule
             )

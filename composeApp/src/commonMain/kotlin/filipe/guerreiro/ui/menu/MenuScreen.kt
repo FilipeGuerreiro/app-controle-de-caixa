@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -81,6 +82,13 @@ fun MenuScreen(
             icon = Icons.Default.Cloud,
             text = "Backup em Nuvem",
             onClick = { navController.navigate("authTest") }
+        )
+
+        // Diagnóstico do Backup Local
+        MenuItem(
+            icon = Icons.Default.Storage,
+            text = "Diagnóstico Backup Local",
+            onClick = { navController.navigate("backupTest") }
         )
 
         // Logout / Trocar de perfil

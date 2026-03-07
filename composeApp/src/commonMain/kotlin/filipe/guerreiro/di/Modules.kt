@@ -32,15 +32,19 @@ import filipe.guerreiro.ui.userselection.UserSelectionViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val appModule = module {
-
-    factory<AppStartupResolver> { StartupResolver(get(), get()) }
-
-    factory { NavigationViewModel() }
+/**
+ * Módulo com TODAS as dependências que derivam do AppDatabase.
+ * Extraído do appModule para permitir unload/reload (Hot-Swap) durante
+ * operações de backup/restore sem reiniciar o processo do app.
+ *
+ * Quando o arquivo .db é substituído em disco, este módulo é descarregado
+ * e recarregado, forçando a recriação de todas as instâncias (Database → DAOs → Repos → SessionManager).
+ */
+val databaseDependenciesModule = module {
 
     // Database com inicialização lazy - só construído quando primeiro DAO for acessado
-    single<AppDatabase> { 
-        getDatabaseBuilder(get()) 
+    single<AppDatabase> {
+        getDatabaseBuilder(get())
     }
 
     // DAOs - resolvidos sob demanda (lazy por padrão no Koin)
@@ -51,13 +55,23 @@ val appModule = module {
     single { get<AppDatabase>().categoryDao() }
     single { get<AppDatabase>().auditLogDao() }
 
-    // Repositorys
+    // Repositories
     single<CashRepository> { CashRepositoryImpl(get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get()) }
     single<PaymentMethodRepository> { PaymentMethodRepositoryImpl(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get()) }
     single<TransactionRepository> { TransactionRepositoryImpl(get(), get()) }
     single<filipe.guerreiro.domain.repository.AuditLogRepository> { filipe.guerreiro.data.local.AuditLogRepositoryImpl(get()) }
+
+    // Session Manager - depende de UserRepository (que depende do banco)
+    single<SessionManager> { SessionManagerImpl(get(), get()) }
+}
+
+val appModule = module {
+
+    factory<AppStartupResolver> { StartupResolver(get(), get()) }
+
+    factory { NavigationViewModel() }
 
     // Use Cases
     factory { filipe.guerreiro.domain.usecase.UpdateTransactionUseCase(get(), get()) }
@@ -67,10 +81,6 @@ val appModule = module {
     factory { filipe.guerreiro.domain.usecase.GenerateWeeklyReportUseCase() }
     factory { filipe.guerreiro.domain.usecase.GetWeeklyPeriodsUseCase(get()) }
     single { filipe.guerreiro.domain.service.ShareManager() }
-
-
-    // Session Manager - singleton para gerenciar estado de autenticação
-    single<SessionManager> { SessionManagerImpl(get(), get()) }
 
     // Google Auth Service
     single { filipe.guerreiro.domain.service.oauth.GoogleAuthService() }

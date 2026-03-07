@@ -7,6 +7,9 @@ import filipe.guerreiro.data.SessionPreferences
 import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
 import filipe.guerreiro.di.appModule
+import filipe.guerreiro.di.databaseDependenciesModule
+import filipe.guerreiro.domain.service.backup.DatabaseFileManager
+import filipe.guerreiro.domain.service.backup.IosDatabaseFileManager
 import filipe.guerreiro.session.IosSessionPreferences
 import filipe.guerreiro.data.local.AppDatabaseConstructor
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -18,7 +21,7 @@ import platform.Foundation.NSUserDomainMask
 
 @OptIn(ExperimentalForeignApi::class)
 val iosDatabaseModule = module {
-    single<RoomDatabase.Builder<AppDatabase>> {
+    factory<RoomDatabase.Builder<AppDatabase>> {
         val documentDirectory = NSFileManager.defaultManager.URLForDirectory(
             directory = NSDocumentDirectory,
             inDomain = NSUserDomainMask,
@@ -50,6 +53,10 @@ val iosModule = module {
     single<SessionPreferences> {
         IosSessionPreferences()
     }
+
+    single<DatabaseFileManager> {
+        IosDatabaseFileManager()
+    }
 }
 
 
@@ -58,6 +65,7 @@ object KoinInitializer {
         startKoin {
             modules(
                 appModule, // commonModule
+                databaseDependenciesModule,
                 iosDatabaseModule,
                 iosModule
             )
