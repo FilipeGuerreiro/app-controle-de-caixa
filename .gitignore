@@ -23,3 +23,13 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# Agent and Build Artifacts
+.agents/
+artefatos/
+design_assets/
+docs/images/
+*.log
+*.logcat
+diff.txt
+build_log.txt

@@ -72,6 +72,9 @@ val appModule = module {
     // Session Manager - singleton para gerenciar estado de autenticação
     single<SessionManager> { SessionManagerImpl(get(), get()) }
 
+    // Google Auth Service
+    single { filipe.guerreiro.domain.service.oauth.GoogleAuthService() }
+
     viewModel {
         RegisterViewModel(get(), get(), get())
     }

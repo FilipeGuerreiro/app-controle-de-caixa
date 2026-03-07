@@ -33,6 +33,7 @@ import filipe.guerreiro.ui.onboarding.OnboardingCategoriesScreen
 import filipe.guerreiro.ui.onboarding.OnboardingPaymentMethodsScreen
 import filipe.guerreiro.ui.onboarding.OnboardingCompleteScreen
 import filipe.guerreiro.ui.onboarding.OnboardingViewModel
+import filipe.guerreiro.ui.auth.AuthTestScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 // Constantes de duração (Material Motion specs)
@@ -393,6 +394,18 @@ fun AppNavHost(
                 onTransactionSaved = { navController.popBackStack() },
                 onNavigateToCategories = { navController.navigate("categories") },
                 onNavigateToPaymentMethods = { navController.navigate("paymentMethods") }
+            )
+        }
+
+        composable(
+            route = "authTest",
+            enterTransition = { slideInFromRight() },
+            exitTransition = { slideOutToLeft() },
+            popEnterTransition = { slideInFromLeft() },
+            popExitTransition = { slideOutToRight() },
+        ) {
+            AuthTestScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

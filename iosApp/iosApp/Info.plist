@@ -10,5 +10,18 @@
 	<array>
 		<string>pt-BR</string>
 	</array>
+	<key>GIDClientID</key>
+	<string>1029117593029-e5rlajck9o5gl9486j14o8af8evc81bu.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1029117593029-e5rlajck9o5gl9486j14o8af8evc81bu</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

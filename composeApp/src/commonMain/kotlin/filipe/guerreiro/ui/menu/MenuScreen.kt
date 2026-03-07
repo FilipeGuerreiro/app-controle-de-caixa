@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import filipe.guerreiro.domain.session.SessionManager
-import filipe.guerreiro.ui.navigation.BottomNavItem
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -75,6 +74,13 @@ fun MenuScreen(
             icon = Icons.Default.Category,
             text = "Categorias",
             onClick = { navController.navigate("categories") }
+        )
+
+        // Backup em Nuvem (teste OAuth)
+        MenuItem(
+            icon = Icons.Default.Cloud,
+            text = "Backup em Nuvem",
+            onClick = { navController.navigate("authTest") }
         )
 
         // Logout / Trocar de perfil
