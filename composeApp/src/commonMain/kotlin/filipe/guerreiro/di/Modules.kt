@@ -17,6 +17,7 @@ import filipe.guerreiro.domain.repository.PaymentMethodRepository
 import filipe.guerreiro.domain.repository.TransactionRepository
 import filipe.guerreiro.domain.repository.UserRepository
 import filipe.guerreiro.domain.session.SessionManager
+import filipe.guerreiro.domain.service.backup.GoogleDriveClient
 import filipe.guerreiro.ui.cash.detail.CashDetailViewModel
 import filipe.guerreiro.ui.cash.listing.CashListViewModel
 import filipe.guerreiro.ui.category.CategoryViewModel
@@ -31,6 +32,7 @@ import filipe.guerreiro.ui.transaction.TransactionViewModel
 import filipe.guerreiro.ui.userselection.UserSelectionViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import io.ktor.client.HttpClient
 
 /**
  * Módulo com TODAS as dependências que derivam do AppDatabase.
@@ -84,6 +86,15 @@ val appModule = module {
 
     // Google Auth Service
     single { filipe.guerreiro.domain.service.oauth.GoogleAuthService() }
+
+    // HTTP Client & Google Drive
+    single { HttpClient() }
+    single { GoogleDriveClient(get()) }
+
+    // Cloud Backup Use Cases
+    factory { filipe.guerreiro.domain.usecase.PerformCloudBackupUseCase(get(), get(), get()) }
+    factory { filipe.guerreiro.domain.usecase.FetchAvailableBackupsUseCase(get(), get()) }
+    factory { filipe.guerreiro.domain.usecase.RestoreFromCloudBackupUseCase(get(), get(), get()) }
 
     viewModel {
         RegisterViewModel(get(), get(), get())

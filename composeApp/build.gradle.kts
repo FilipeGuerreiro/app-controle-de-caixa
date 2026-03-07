@@ -53,6 +53,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.play.services.auth)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -76,14 +77,19 @@ kotlin {
             implementation(libs.compose.animation)
 
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ktor.client.core)
 
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.ktor.client.java)
         }
     }
 }
