@@ -23,9 +23,10 @@ fun App() {
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    val shouldHideBottomBar = when (currentRoute) {
+    val shouldHideBottomBar = when (currentRoute?.substringBefore("?")) {
         "home",
         "cash",
+        "reports",
         "more" -> false
          else -> true
     }

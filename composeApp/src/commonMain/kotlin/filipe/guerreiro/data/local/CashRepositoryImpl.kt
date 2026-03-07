@@ -109,4 +109,14 @@ class CashRepositoryImpl(
             cashDao.updateDailyGoal(sessionId, dailyGoalAmount)
         }
     }
+
+    override fun getSessionsByDateRange(userId: Long, start: kotlin.time.Instant, end: kotlin.time.Instant): Flow<List<CashSession>> {
+        return cashDao.getSessionsByDateRange(userId, start.toEpochMilliseconds(), end.toEpochMilliseconds())
+    }
+
+    override suspend fun getAllSessionsSuspend(userId: Long): List<CashSession> {
+        return withContext(Dispatchers.IO) {
+            cashDao.getAllSessionsSuspend(userId)
+        }
+    }
 }

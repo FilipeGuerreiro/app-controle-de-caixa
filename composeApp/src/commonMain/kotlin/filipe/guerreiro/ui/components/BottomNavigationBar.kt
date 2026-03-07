@@ -1,10 +1,5 @@
 package filipe.guerreiro.ui.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -22,6 +17,7 @@ fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Cash,
+        BottomNavItem.Reports,
         BottomNavItem.More,
     )
 
@@ -32,7 +28,7 @@ fun BottomNavigationBar(navController: NavController) {
 
         items.forEach { item ->
             NavigationBarItem(
-                selected = currentRoute == item.route,
+                selected = currentRoute?.substringBefore("?") == item.route,
                 onClick = {
                     navController.navigate(item.route) {
                         popUpTo(BottomNavItem.Home.route) {

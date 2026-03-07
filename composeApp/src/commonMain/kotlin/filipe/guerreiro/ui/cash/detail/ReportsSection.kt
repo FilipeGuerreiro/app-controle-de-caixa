@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TableChart
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,8 +28,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// ----- Mock Data -----
-
 data class ReportOptionUi(
     val title: String,
     val subtitle: String,
@@ -36,40 +37,38 @@ data class ReportOptionUi(
     val isLoading: Boolean = false
 )
 
-// ----- Composables -----
-
 @Composable
 fun ReportsSection(
-    isExporting: Boolean,
-    onExportCsvClick: () -> Unit
+    isExportingDaily: Boolean,
+    onOpenDashboardClick: () -> Unit,
+    onExportDailyClick: () -> Unit,
+    onGenerateWeeklyReportClick: () -> Unit
 ) {
     val options = listOf(
         ReportOptionUi(
-            title = "Exportar Planilha (CSV)",
-            subtitle = "Dados detalhados do caixa",
-            icon = Icons.Default.TableChart,
-            accentColor = Color(0xFF43A047), // Green
-            onClick = onExportCsvClick,
-            isLoading = isExporting
+            title = "Painel de Relatórios Diário",
+            subtitle = "Acompanhar visão geral deste caixa nas métricas oficiais",
+            icon = Icons.Default.BarChart,
+            accentColor = Color(0xFF1E88E5), // Blue accent
+            onClick = onOpenDashboardClick,
+            isLoading = false
         ),
-//        ReportOptionUi(
-//            title = "Exportar PDF",
-//            subtitle = "Disponível em breve",
-//            icon = Icons.Default.PictureAsPdf,
-//            accentColor = Color(0xFFE53935) // Red
-//        ),
-//        ReportOptionUi(
-//            title = "Compartilhar Resumo",
-//            subtitle = "Disponível em breve",
-//            icon = Icons.Default.Share,
-//            accentColor = Color(0xFF1E88E5) // Blue
-//        ),
-//        ReportOptionUi(
-//            title = "Imprimir Comprovante",
-//            subtitle = "Disponível em breve",
-//            icon = Icons.Default.Print,
-//            accentColor = Color(0xFF8E24AA) // Purple
-//        )
+        ReportOptionUi(
+            title = "Gerar Relatório Diário",
+            subtitle = "Exportar a planilha deste fechamento de caixa",
+            icon = Icons.Default.TableChart,
+            accentColor = Color(0xFF4CA04B),
+            onClick = onExportDailyClick,
+            isLoading = isExportingDaily
+        ),
+        ReportOptionUi(
+            title = "Gerar Relatório Semanal",
+            subtitle = "Selecionar fechamentos de uma semana para exportação",
+            icon = Icons.Default.CalendarMonth,
+            accentColor = Color(0xFFFF9800),
+            onClick = onGenerateWeeklyReportClick,
+            isLoading = false
+        )
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -104,7 +103,6 @@ private fun ReportOptionCard(option: ReportOptionUi) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Icon badge
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = option.accentColor.copy(alpha = 0.15f),
@@ -120,7 +118,6 @@ private fun ReportOptionCard(option: ReportOptionUi) {
                 )
             }
 
-            // Text info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = option.title,
@@ -137,9 +134,8 @@ private fun ReportOptionCard(option: ReportOptionUi) {
                 )
             }
 
-            // Arrow or Loading
             if (option.isLoading) {
-                androidx.compose.material3.CircularProgressIndicator(
+                CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
                     strokeWidth = 2.dp,
                     color = option.accentColor

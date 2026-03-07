@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -49,10 +48,6 @@ enum class DetailSection(
     GOALS(
         label = "Metas",
         icon = Icons.Default.Flag
-    ),
-    EXPORT(
-        label = "Relatórios",
-        icon = Icons.Default.Description
     )
 }
 

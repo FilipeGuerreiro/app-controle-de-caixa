@@ -1,5 +1,5 @@
 package filipe.guerreiro.domain.service
 
 expect class ShareManager() {
-    fun shareCsvFile(filename: String, content: String)
+    fun shareXlsxFile(filename: String, content: ByteArray)
 }

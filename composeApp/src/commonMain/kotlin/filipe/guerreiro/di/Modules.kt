@@ -63,7 +63,9 @@ val appModule = module {
     factory { filipe.guerreiro.domain.usecase.UpdateTransactionUseCase(get(), get()) }
     factory { filipe.guerreiro.domain.usecase.DeleteTransactionUseCase(get(), get()) }
     factory { filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase(get()) }
-    factory { filipe.guerreiro.domain.usecase.GenerateCsvUseCase() }
+    factory { filipe.guerreiro.domain.usecase.GenerateDailyReportUseCase() }
+    factory { filipe.guerreiro.domain.usecase.GenerateWeeklyReportUseCase() }
+    factory { filipe.guerreiro.domain.usecase.GetWeeklyPeriodsUseCase(get()) }
     single { filipe.guerreiro.domain.service.ShareManager() }
 
 
@@ -87,7 +89,7 @@ val appModule = module {
     }
 
     viewModel {
-        (cashId: Long) -> CashDetailViewModel(cashId, get(), get(), get(), get(), get(), get(), get(), get(), get())
+        (cashId: Long) -> CashDetailViewModel(cashId, get(), get(), get(), get(), get(), get(), get())
     }
 
     viewModel {
@@ -116,5 +118,9 @@ val appModule = module {
 
     viewModel {
         OnboardingViewModel(get(), get(), get())
+    }
+
+    viewModel {
+        (cashId: Long?) -> filipe.guerreiro.ui.reports.ReportsDashboardViewModel(cashId, get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
 }

@@ -3,41 +3,38 @@ package filipe.guerreiro.domain.service
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.koin.java.KoinJavaComponent.getKoin
 import java.io.File
 import java.io.FileOutputStream
 
-actual class ShareManager actual constructor() : KoinComponent {
+actual class ShareManager {
 
-    private val context: Context by inject()
+    private val context: Context get() = getKoin().get()
 
-    actual fun shareCsvFile(filename: String, content: String) {
-        try {
-            val cachePath = File(context.cacheDir, "csv_exports")
-            cachePath.mkdirs()
-            
-            val newFile = File(cachePath, filename)
-            val fos = FileOutputStream(newFile)
-            fos.write(content.toByteArray(Charsets.UTF_8))
-            fos.close()
-
-            val authority = "${context.packageName}.fileprovider"
-            val fileUri = FileProvider.getUriForFile(context, authority, newFile)
-
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/csv"
-                putExtra(Intent.EXTRA_STREAM, fileUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            val chooserIntent = Intent.createChooser(shareIntent, "Compartilhar CSV").apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(chooserIntent)
-        } catch (e: Exception) {
-            e.printStackTrace()
+    actual fun shareXlsxFile(filename: String, content: ByteArray) {
+        val cacheDir = File(context.cacheDir, "report_exports").also { it.mkdirs() }
+        val file = File(cacheDir, filename)
+        FileOutputStream(file).use { fos ->
+            fos.write(content)
         }
+        shareFile(file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    }
+
+    private fun shareFile(file: File, mimeType: String) {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = mimeType
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(
+            Intent.createChooser(intent, "Compartilhar relatório")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 }

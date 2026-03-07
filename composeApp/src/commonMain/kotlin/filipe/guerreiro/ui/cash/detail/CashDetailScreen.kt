@@ -135,12 +135,7 @@ fun CashDetailScreen(
                                 onAddGoalClick = { showEditGoalDialog = true }
                             )
                         }
-                        DetailSection.EXPORT -> {
-                            ReportsSection(
-                                isExporting = uiState.isExporting,
-                                onExportCsvClick = { viewModel.exportToCsv() }
-                            )
-                        }
+
                     }
                 }
             }
@@ -206,4 +201,5 @@ fun CashDetailScreen(
             onDismiss = { showAuditLogsSheet = false }
         )
     }
+
 }

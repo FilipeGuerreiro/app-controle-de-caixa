@@ -58,6 +58,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 
 @Composable
@@ -70,6 +71,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedQuickAction by remember { mutableStateOf<QuickActionUiModel?>(null) }
     var showCashClosedWarning by remember { mutableStateOf(false) }
+    var dismissedOpenCashWarning by rememberSaveable { mutableStateOf(false) }
 
     // Redireciona para seleção de usuário se não estiver logado
     LaunchedEffect(uiState.isLoggedIn) {
@@ -134,13 +136,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Smart Alerts
-        if (!showSkeleton && uiState.isCashOpenForTooLong) {
-            SmartAlertsSection(
-                onNavigateToCash = { onNavigateToCash(uiState.currentCashId) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+        // Smart Alerts foram movidos para um AlertDialog no final da tela
 
         // Performance Insights
         if (!showSkeleton && uiState.isCashOpen) {
@@ -204,6 +200,48 @@ fun HomeScreen(
             dismissButton = {
                 TextButton(onClick = { showCashClosedWarning = false }) {
                     Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    if (!showSkeleton && uiState.isCashOpenForTooLong && !dismissedOpenCashWarning) {
+        AlertDialog(
+            onDismissRequest = { dismissedOpenCashWarning = true },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Atenção: Caixa Aberto!",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text = "Seu caixa está aberto há mais de 24 horas. Deseja conferir e fechar?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        dismissedOpenCashWarning = true
+                        onNavigateToCash(uiState.currentCashId)
+                    }
+                ) {
+                    Text("Ver Caixa")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { dismissedOpenCashWarning = true }) {
+                    Text("Mais tarde")
                 }
             }
         )
@@ -661,46 +699,6 @@ fun CashStatusCard(
     }
 }
 
-@Composable
-fun SmartAlertsSection(
-    onNavigateToCash: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onNavigateToCash() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Atenção: Caixa Aberto!",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                )
-                Text(
-                    text = "Seu caixa está aberto há mais de 24 horas. Deseja conferir e fechar?",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun PerformanceInsightsSection(averageTicket: String, salesCount: Int) {

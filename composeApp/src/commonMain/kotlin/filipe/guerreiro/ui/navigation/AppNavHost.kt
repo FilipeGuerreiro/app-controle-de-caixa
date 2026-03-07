@@ -13,6 +13,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import filipe.guerreiro.ui.cash.detail.CashDetailScreen
 import filipe.guerreiro.ui.cash.listing.CashListScreen
 import filipe.guerreiro.ui.closing.ClosingScreen
@@ -20,6 +22,7 @@ import filipe.guerreiro.ui.menu.MenuScreen
 import filipe.guerreiro.ui.home.HomeScreen
 import filipe.guerreiro.ui.opening.OpeningScreen
 import filipe.guerreiro.ui.register.RegisterScreen
+import filipe.guerreiro.ui.reports.ReportsDashboardScreen
 import filipe.guerreiro.ui.start.AppStartScreen
 import filipe.guerreiro.ui.userselection.UserSelectionScreen
 import filipe.guerreiro.ui.theme.ColorGalleryScreen
@@ -37,10 +40,10 @@ private const val SPLASH_FADE_DURATION = 700
 private const val FADE_THROUGH_DURATION = 300
 private const val SLIDE_DURATION = 350
 
-// Rotas do Bottom Navigation (para detectar transições entre tabs)
 private val bottomNavRoutes = setOf(
     BottomNavItem.Home.route,
     BottomNavItem.Cash.route,
+    BottomNavItem.Reports.route,
     BottomNavItem.More.route,
 )
 
@@ -295,6 +298,19 @@ fun AppNavHost(
                 onNavigateToTransaction = { navController.navigate("transaction") },
                 onOpenCashClick = { navController.navigate("opening") },
                 onCloseCashClick = { navController.navigate("closing") }
+            )
+        }
+
+        composable(
+            route = "${BottomNavItem.Reports.route}?cashId={cashId}",
+            arguments = listOf(navArgument("cashId") { type = NavType.StringType; nullable = true }),
+            enterTransition = { fadeThroughEnter() },
+            exitTransition = { fadeThroughExit() }
+        ) { backStackEntry ->
+            val cashIdStr = backStackEntry.savedStateHandle.get<String>("cashId")
+            ReportsDashboardScreen(
+                cashId = cashIdStr?.toLongOrNull(),
+                onBackClick = { navController.popBackStack() }
             )
         }
 

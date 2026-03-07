@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import filipe.guerreiro.domain.model.toSummaryUi
 import filipe.guerreiro.domain.model.toUiModel
 import filipe.guerreiro.domain.model.toCurrencyString
+
 import kotlinx.datetime.toLocalDateTime
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -23,8 +24,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.datetime.TimeZone
 
 data class CashDetailUiState(
@@ -40,7 +39,7 @@ data class CashDetailUiState(
     val rawTransactions: List<filipe.guerreiro.domain.model.Transaction> = emptyList(),
     val showAuditFrictionDialog: Boolean = false,
     val pendingTransactionAction: PendingTransactionAction? = null,
-    val isExporting: Boolean = false,
+
     val isLoading: Boolean = true
 )
 
@@ -106,9 +105,7 @@ class CashDetailViewModel(
     private val paymentMethodRepository: filipe.guerreiro.domain.repository.PaymentMethodRepository,
     private val updateTransactionUseCase: filipe.guerreiro.domain.usecase.UpdateTransactionUseCase,
     private val deleteTransactionUseCase: filipe.guerreiro.domain.usecase.DeleteTransactionUseCase,
-    private val getSessionAuditLogsUseCase: filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase,
-    private val generateCsvUseCase: filipe.guerreiro.domain.usecase.GenerateCsvUseCase,
-    private val shareManager: filipe.guerreiro.domain.service.ShareManager
+    private val getSessionAuditLogsUseCase: filipe.guerreiro.domain.usecase.GetSessionAuditLogsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CashDetailUiState(isLoading = true))
@@ -262,7 +259,6 @@ class CashDetailViewModel(
                                 rawTransactions = transactions,
                                 showAuditFrictionDialog = _uiState.value.showAuditFrictionDialog,
                                 pendingTransactionAction = _uiState.value.pendingTransactionAction,
-                                isExporting = _uiState.value.isExporting,
                                 isLoading = false
                             )
                         }
@@ -368,36 +364,5 @@ class CashDetailViewModel(
         )
     }
 
-    fun exportToCsv() {
-        val currentState = _uiState.value
-        val sessionUi = currentState.session ?: return
-        
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isExporting = true)
-            
-            try {
-                // Fetch the raw models
-                val session = cashRepository.getSessionById(cashId).firstOrNull()
-                if (session != null) {
-                    val csvText = generateCsvUseCase(
-                        session = session,
-                        transactions = currentState.rawTransactions,
-                        categories = categoryRepository.getCategories(session.userId).first(),
-                        paymentMethods = paymentMethodRepository.getPaymentMethods(session.userId).first(),
-                        totalInflow = currentState.summary.totalInflowValue,
-                        totalOutflow = currentState.summary.totalOutflowValue,
-                        currentBalance = currentState.summary.currentBalanceValue
-                    )
-                    
-                    val filename = "relatorio_caixa_${session.id}_${session.openingTimeStamp.toLocalDateTime(
-                        TimeZone.currentSystemDefault())}.csv"
-                    shareManager.shareCsvFile(filename, csvText)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                _uiState.value = _uiState.value.copy(isExporting = false)
-            }
-        }
-    }
+
 }

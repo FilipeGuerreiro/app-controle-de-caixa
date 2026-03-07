@@ -44,4 +44,10 @@ interface CashDao {
 
     @Query("UPDATE cash_sessions SET dailyGoalAmount = :amount WHERE id = :sessionId")
     suspend fun updateDailyGoal(sessionId: Long, amount: Long?)
+
+    @Query("SELECT * FROM cash_sessions WHERE userId = :userId AND openingTimeStamp >= :startMs AND openingTimeStamp < :endMs ORDER BY openingTimeStamp ASC")
+    fun getSessionsByDateRange(userId: Long, startMs: Long, endMs: Long): Flow<List<CashSession>>
+
+    @Query("SELECT * FROM cash_sessions WHERE userId = :userId ORDER BY openingTimeStamp ASC")
+    suspend fun getAllSessionsSuspend(userId: Long): List<CashSession>
 }
