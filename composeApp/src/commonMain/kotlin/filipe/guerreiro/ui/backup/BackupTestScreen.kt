@@ -318,7 +318,18 @@ private fun ResultCard(
 private fun formatFileSize(bytes: Int): String {
     return when {
         bytes < 1024 -> "$bytes B"
-        bytes < 1024 * 1024 -> "${"%.1f".format(bytes / 1024.0)} KB"
-        else -> "${"%.2f".format(bytes / (1024.0 * 1024.0))} MB"
+        bytes < 1024 * 1024 -> "${(bytes / 1024.0).roundTo(1)} KB"
+        else -> "${(bytes / (1024.0 * 1024.0)).roundTo(2)} MB"
     }
+}
+
+private fun Double.roundTo(decimals: Int): String {
+    var multiplier = 1.0
+    repeat(decimals) { multiplier *= 10 }
+    val rounded = kotlin.math.round(this * multiplier) / multiplier
+    // Sempre mostrar a quantidade certa de decimais
+    val parts = rounded.toString().split(".")
+    val intPart = parts[0]
+    val decPart = (parts.getOrElse(1) { "0" }).padEnd(decimals, '0').take(decimals)
+    return "$intPart.$decPart"
 }
