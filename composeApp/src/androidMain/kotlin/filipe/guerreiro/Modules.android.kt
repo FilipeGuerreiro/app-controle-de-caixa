@@ -6,6 +6,7 @@ import filipe.guerreiro.data.AndroidUserPreferences
 import filipe.guerreiro.data.SessionPreferences
 import filipe.guerreiro.data.UserPreferences
 import filipe.guerreiro.data.local.AppDatabase
+import filipe.guerreiro.data.local.ALL_V7_MIGRATIONS
 import filipe.guerreiro.domain.service.backup.AndroidDatabaseFileManager
 import filipe.guerreiro.domain.service.backup.DatabaseFileManager
 import filipe.guerreiro.session.AndroidSessionPreferences
@@ -19,15 +20,7 @@ val androidDatabaseModule = module {
         Room.databaseBuilder<AppDatabase>(
             context = context,
             name = dbFile.absolutePath
-        ).addMigrations(MIGRATION_4_5)
-    }
-}
-
-val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
-    override fun migrate(connection: androidx.sqlite.SQLiteConnection) {
-        connection.prepare("ALTER TABLE cash_sessions ADD COLUMN dailyGoalAmount INTEGER DEFAULT NULL").use { stmt ->
-            stmt.step()
-        }
+        ).addMigrations(*ALL_V7_MIGRATIONS)
     }
 }
 

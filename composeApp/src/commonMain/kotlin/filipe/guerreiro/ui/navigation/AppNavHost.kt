@@ -33,9 +33,7 @@ import filipe.guerreiro.ui.onboarding.OnboardingCategoriesScreen
 import filipe.guerreiro.ui.onboarding.OnboardingPaymentMethodsScreen
 import filipe.guerreiro.ui.onboarding.OnboardingCompleteScreen
 import filipe.guerreiro.ui.onboarding.OnboardingViewModel
-import filipe.guerreiro.ui.auth.AuthTestScreen
-import filipe.guerreiro.ui.backup.BackupTestScreen
-import filipe.guerreiro.ui.backup.CloudBackupTestScreen
+import filipe.guerreiro.ui.backup.CloudBackupScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 // Constantes de duração (Material Motion specs)
@@ -400,39 +398,23 @@ fun AppNavHost(
         }
 
         composable(
-            route = "authTest",
+            route = "cloudBackup",
             enterTransition = { slideInFromRight() },
             exitTransition = { slideOutToLeft() },
             popEnterTransition = { slideInFromLeft() },
             popExitTransition = { slideOutToRight() },
         ) {
-            AuthTestScreen(
-                onBackClick = { navController.popBackStack() }
+            CloudBackupScreen(
+                onBackClick = { navController.popBackStack() },
+                onRestoreSuccess = {
+                    // Após restore, volta à raiz para recarregar tudo com o novo banco
+                    navController.navigate("start") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
             )
         }
 
-        composable(
-            route = "backupTest",
-            enterTransition = { slideInFromRight() },
-            exitTransition = { slideOutToLeft() },
-            popEnterTransition = { slideInFromLeft() },
-            popExitTransition = { slideOutToRight() },
-        ) {
-            BackupTestScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
 
-        composable(
-            route = "cloudBackupTest",
-            enterTransition = { slideInFromRight() },
-            exitTransition = { slideOutToLeft() },
-            popEnterTransition = { slideInFromLeft() },
-            popExitTransition = { slideOutToRight() },
-        ) {
-            CloudBackupTestScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
     }
 }

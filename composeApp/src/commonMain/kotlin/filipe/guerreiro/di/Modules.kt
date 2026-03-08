@@ -30,6 +30,7 @@ import filipe.guerreiro.ui.paymentmethod.PaymentMethodViewModel
 import filipe.guerreiro.ui.register.RegisterViewModel
 import filipe.guerreiro.ui.transaction.TransactionViewModel
 import filipe.guerreiro.ui.userselection.UserSelectionViewModel
+import filipe.guerreiro.ui.backup.CloudBackupViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import io.ktor.client.HttpClient
@@ -142,6 +143,10 @@ val appModule = module {
 
     viewModel {
         OnboardingViewModel(get(), get(), get())
+    }
+
+    viewModel {
+        CloudBackupViewModel(get(), get(), get(), get())
     }
 
     viewModel {
